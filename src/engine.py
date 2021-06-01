@@ -4,20 +4,21 @@ import config
 from utils.model_utils import save_model_checkpoint
 
 
-def train_fn(model, data_loader, optimizer, criterion, save_model=False):
+def train_fn(model, data_loader, optimizer, loss_fn, save_model=False):
     model.train()
     fin_loss = 0
-    tk = tqdm(data_loader, total=len(data_loader))
-    for data in tk:
-        # for (key, value) in data:
-        #     data[key] = value.to(config.DEVICE)
-        x = data[0].to(config.DEVICE)
-        targets = data[1].to(config.DEVICE)
+    tk_iterator = tqdm(data_loader, total=len(data_loader))
+    for data in tk_iterator:
+        # an item of the data is available as a dictionary
+        for (key, value) in data.items():
+            data[key] = value.to(config.DEVICE)
+
         optimizer.zero_grad()
-        out = model(x)
-        loss = criterion(out, targets)
-        loss.backward()
-        optimizer.step()
+        with torch.set_grad_enabled(True):
+            out = model(**data)
+            loss = loss_fn(out, data["targets"])
+            loss.backward()
+            optimizer.step()
         fin_loss += loss.item()
 
     if save_model:
