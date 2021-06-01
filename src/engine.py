@@ -1,12 +1,15 @@
 from tqdm import tqdm
 import torch
 import config
+import numpy as np
 from utils.model_utils import save_model_checkpoint
 
 
 def train_fn(model, data_loader, optimizer, loss_fn, save_model=False):
     model.train()
     fin_loss = 0
+    model_outputs = []
+    model_targets = []
     tk_iterator = tqdm(data_loader, total=len(data_loader))
     for data in tk_iterator:
         # an item of the data is available as a dictionary
@@ -19,18 +22,21 @@ def train_fn(model, data_loader, optimizer, loss_fn, save_model=False):
             loss = loss_fn(out, data["targets"])
             loss.backward()
             optimizer.step()
+            model_targets.extend(data["targets"].detach().cpu().numpy())
+            model_outputs.extend(out.detach().cpu().numpy())
         fin_loss += loss.item()
 
-    if save_model:
-        save_model_checkpoint(model, optimizer, loss, config.CHECKPOINT_PATH)
+    # if save_model:
+    #     save_model_checkpoint(model, optimizer, loss, config.CHECKPOINT_PATH)
 
-    return fin_loss/len(data_loader)
+    return np.array(model_targets), np.array(model_outputs), fin_loss/len(data_loader)
 
 
 def eval_fn(model, data_loader, loss_fn):
     model.eval()
     fin_loss = 0
-    predictions = []
+    model_outputs = []
+    model_targets = []
     with torch.no_grad():
         tk_iterator = tqdm(data_loader, total=len(data_loader))
         for data in tk_iterator:
@@ -38,7 +44,8 @@ def eval_fn(model, data_loader, loss_fn):
                 data[key] = value.to(config.DEVICE)
             out = model(**data)
             loss = loss_fn(out, data["targets"])
-            # predictions_batch = list(out.squeeze(1).detach().cpu().numpy())
+            model_outputs.extend(out.detach().cpu().numpy())
+            model_targets.extend(data["targets"].detach().cpu().numpy())
             fin_loss += loss.item()
 
-        return predictions, fin_loss / len(data_loader)
+        return np.array(model_targets), np.array(model_outputs), fin_loss / len(data_loader)

@@ -10,12 +10,25 @@ from sklearn import metrics
 import engine
 import config
 # import dataset
-from utils.model_utils import plot_loss
+from utils.model_utils import plot_loss, load_model_if_checkpointed, save_model_checkpoint
 from models.simpleCNN import SimpleCNN
 from models.lettuceNet import LettuceNet
 from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import DataLoaderLettuceNet
 import json
+import pandas as pd
+
+
+def compute_criteria(targets, predictions):
+    targets_df = pd.DataFrame(targets, columns=config.FEATURES)
+    predictions_df = pd.DataFrame(predictions, columns=config.FEATURES)
+
+    error_log = {}
+    for column in targets_df.columns:
+        # y => ground truths and y_hat => predictions
+        error_log[column] = sum([(y - y_hat)**2 for y, y_hat in zip(targets_df[column].values, predictions_df[column].values)])/sum([y**2 for y in targets_df[column].values])
+
+    return error_log
 
 
 def run_training():
@@ -48,22 +61,13 @@ def run_training():
     # TensorBoard
     writer = SummaryWriter()
 
-    # A simple transform which we will apply to the MNIST images
-    # simple_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (1.0,))])
-
-    # train_set = datasets.MNIST(root=config.DATA_DIR, train=True, transform=simple_transform, download=True)
-    # test_set = datasets.MNIST(root=config.DATA_DIR, train=False, transform=simple_transform, download=True)
-
-    # train_dataset = dataset.ClassificationDataset(image_paths=train_imgs, targets=train_targets,
-    #                                               resize=(config.IMAGE_HEIGHT, config.IMAGE_WIDTH))
-
     f = open(config.JSON_FILE)
     meta_data = json.load(f)
     measurements = meta_data["Measurements"]
 
     img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
     # Ad hoc at this point
-    train_img_paths = img_paths[:180]
+    train_img_paths = img_paths[:16]
     test_img_paths = img_paths[180:]
 
     # --------------------------------------
@@ -94,22 +98,80 @@ def run_training():
 
     print('\nTrain and Validation DataLoader constructed successfully!')
 
-    train_loss_data = []
+    # Code to use multiple GPUs (if available)
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        model = torch.nn.DataParallel(model)
+
+    # --------------------------------------
+    # Load checkpointed model (if  present)
+    # --------------------------------------
+    if config.DEVICE == "cpu":
+        load_on_cpu = True
+    else:
+        load_on_cpu = False
+    model, optimizer, checkpointed_loss, checkpoint_flag = load_model_if_checkpointed(model, optimizer, checkpoint_path,
+                                                                                      load_on_cpu=load_on_cpu)
+    if checkpoint_flag:
+        print(f"Checkpoint Found! Loading from checkpoint :: LOSS={checkpointed_loss}")
+    else:
+        print("Checkpoint Not Found! Training from beginning")
+
+
+    train_loss_per_epoch = []
     validation_loss_data = []
     for epoch in range(config.EPOCHS):
         # training
-        train_loss = engine.train_fn(model, train_loader, optimizer, loss_fn)
+        train_targets, train_predictions, train_loss = engine.train_fn(model, train_loader, optimizer, loss_fn)
+
+        # Save model with final train loss (script to save the best weights?)
+        if checkpointed_loss != 0.0:
+            if train_loss < checkpointed_loss:
+                save_model_checkpoint(model, optimizer, train_loss, checkpoint_path)
+                checkpointed_loss = train_loss
+            else:
+                pass
+        else:
+            if len(train_loss_per_epoch) > 0:
+                if train_loss < min(train_loss_per_epoch):
+                    save_model_checkpoint(model, optimizer, train_loss, checkpoint_path)
+            else:
+                save_model_checkpoint(model, optimizer, train_loss, checkpoint_path)
+
+        error_log_train = compute_criteria(train_targets, train_predictions)
+
+        # for feature in error_log_train.keys():
+        #     writer.add_scalar(f"Train/{feature}", error_log_train[feature], epoch)
+
+        NMSE_error = sum([error_log_train[key] for key in error_log_train.keys()])
+        print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
+              "\nTraining Loss: {:.3f} |".format(train_loss),
+              "Train_NMSE : {:.5f} |".format(NMSE_error),)
 
         # validation
-        eval_preds, eval_loss = engine.eval_fn(model, test_loader, loss_fn)
+        eval_targets, eval_predictions, eval_loss = engine.eval_fn(model, test_loader, loss_fn)
 
-        print(f"Epoch {epoch} => Training Loss: {train_loss}, Val Loss: {eval_loss}")
+        error_log_validation = compute_criteria(eval_targets, eval_predictions)
+
+        # for feature in error_log_validation.keys():
+        #     writer.add_scalar(f"Test/{feature}", error_log_validation[feature], epoch)
+
+        NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
+        print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
+              "\nTest Loss: {:.3f} |".format(eval_loss),
+              "Test_NMSE : {:.3f} |".format(NMSE_error),)
+
+        # mean_loss = np.mean(train_loss_per_epoch)
+        # # Save the mean_loss value for each video instance to the writer
+        # print(f"Avg Training Loss: {np.mean(mean_loss)} for {config.EPOCHS} epochs")
+
+        # print(f"Epoch {epoch+1} => Training Loss: {train_loss}, Val Loss: {eval_loss}")
         # print(f"Epoch {epoch} => Training Loss: {train_loss}")
-        train_loss_data.append(train_loss)
+        train_loss_per_epoch.append(train_loss)
         validation_loss_data.append(eval_loss)
 
     # print(train_dataset[0])
-    plot_loss(train_loss_data, validation_loss_data, plot_path=config.PLOT_PATH)
+    plot_loss(train_loss_per_epoch, validation_loss_data, plot_path=config.PLOT_PATH)
     print("done")
 
 
