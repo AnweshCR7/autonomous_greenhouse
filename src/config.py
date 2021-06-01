@@ -1,6 +1,7 @@
-# DATA_DIR = "/content/drive/MyDrive/data/"
-# CHECKPOINT_PATH = "/content/drive/MyDrive/data/MNIST/checkpoint"
-# PLOT_PATH = "/content/drive/MyDrive/data/MNIST/plots"
+# DATA_DIR = "/content/drive/MyDrive/data/FirstTrainingData"
+# JSON_FILE = "/content/drive/MyDrive/data/FirstTrainingData/GroundTruth.json"
+# CHECKPOINT_PATH = "/content/drive/MyDrive/data/GreenHouse/checkpoint"
+# PLOT_PATH = "/content/drive/MyDrive/data/GreenHouse/plots"
 # NUM_WORKERS = 1
 # DEVICE = "cuda"
 # BATCH_SIZE = 32
@@ -17,6 +18,7 @@ IMAGE_HEIGHT = 75
 NUM_WORKERS = 0
 DEVICE = "cpu"
 EPOCHS = 2
-lr = 0.001
 RANDOM_SEED = 42
+
+lr = 0.001
 FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafArea']

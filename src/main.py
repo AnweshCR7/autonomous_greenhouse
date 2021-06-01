@@ -62,13 +62,15 @@ def run_training():
     measurements = meta_data["Measurements"]
 
     img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
-    img_paths = img_paths[:8]
+    # Ad hoc at this point
+    train_img_paths = img_paths[:180]
+    test_img_paths = img_paths[180:]
 
     # --------------------------------------
     # Build Train Dataloaders
     # --------------------------------------
 
-    train_set = DataLoaderLettuceNet(img_paths=img_paths, meta_data=measurements, center_crop=700, resize=(224,224))
+    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, meta_data=measurements, center_crop=700, resize=(224,224))
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_set,
@@ -81,33 +83,33 @@ def run_training():
     # -----------------------------
     # Build Validation Dataloaders
     # -----------------------------
-    # test_set = DataLoaderLettuceNet(st_maps_path=video_files_test, target_signal_path=config.TARGET_SIGNAL_DIR)
-    # test_loader = torch.utils.data.DataLoader(
-    #     dataset=test_set,
-    #     batch_size=config.BATCH_SIZE,
-    #     num_workers=config.NUM_WORKERS,
-    #     shuffle=False,
-    #     # collate_fn=collate_fn
-    # )
+    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, meta_data=measurements, center_crop=700, resize=(224,224))
+    test_loader = torch.utils.data.DataLoader(
+        dataset=test_set,
+        batch_size=config.BATCH_SIZE,
+        num_workers=config.NUM_WORKERS,
+        shuffle=False,
+        # collate_fn=collate_fn
+    )
 
-    print('\nTrain DataLoader constructed successfully!')
+    print('\nTrain and Validation DataLoader constructed successfully!')
 
     train_loss_data = []
-    test_loss_data = []
+    validation_loss_data = []
     for epoch in range(config.EPOCHS):
         # training
         train_loss = engine.train_fn(model, train_loader, optimizer, loss_fn)
 
         # validation
-        # eval_preds, eval_loss = engine.eval_fn(model, test_loader, criterion)
+        eval_preds, eval_loss = engine.eval_fn(model, test_loader, loss_fn)
 
-        # print(f"Epoch {epoch} => Training Loss: {train_loss}, Val Loss: {eval_loss}")
-        print(f"Epoch {epoch} => Training Loss: {train_loss}")
+        print(f"Epoch {epoch} => Training Loss: {train_loss}, Val Loss: {eval_loss}")
+        # print(f"Epoch {epoch} => Training Loss: {train_loss}")
         train_loss_data.append(train_loss)
-        # test_loss_data.append(eval_loss)
+        validation_loss_data.append(eval_loss)
 
     # print(train_dataset[0])
-    plot_loss(train_loss_data, test_loss_data, plot_path=config.PLOT_PATH)
+    plot_loss(train_loss_data, validation_loss_data, plot_path=config.PLOT_PATH)
     print("done")
 
 

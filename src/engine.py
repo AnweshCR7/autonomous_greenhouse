@@ -27,20 +27,18 @@ def train_fn(model, data_loader, optimizer, loss_fn, save_model=False):
     return fin_loss/len(data_loader)
 
 
-def eval_fn(model, data_loader, criterion):
+def eval_fn(model, data_loader, loss_fn):
     model.eval()
     fin_loss = 0
-    fin_preds = []
+    predictions = []
     with torch.no_grad():
-        tk = tqdm(data_loader, total=len(data_loader))
-        for data in tk:
-            # for key, value in data.items():
-            #     data[key] = value.to(config.DEVICE)
-            x = data[0].to(config.DEVICE)
-            targets = data[1].to(config.DEVICE)
-            out = model(x)
-            loss = criterion(out, targets)
-            _, batch_preds = torch.max(out.data, 1)
+        tk_iterator = tqdm(data_loader, total=len(data_loader))
+        for data in tk_iterator:
+            for (key, value) in data.items():
+                data[key] = value.to(config.DEVICE)
+            out = model(**data)
+            loss = loss_fn(out, data["targets"])
+            # predictions_batch = list(out.squeeze(1).detach().cpu().numpy())
             fin_loss += loss.item()
-            fin_preds.append(batch_preds)
-        return fin_preds, fin_loss / len(data_loader)
+
+        return predictions, fin_loss / len(data_loader)
