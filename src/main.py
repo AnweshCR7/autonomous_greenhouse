@@ -67,7 +67,7 @@ def run_training():
 
     img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
     # Ad hoc at this point
-    train_img_paths = img_paths[:16]
+    train_img_paths = img_paths[:180]
     test_img_paths = img_paths[180:]
 
     # --------------------------------------
