@@ -1,45 +1,51 @@
 from tqdm import tqdm
 import torch
 import config
+import numpy as np
 from utils.model_utils import save_model_checkpoint
 
 
-def train_fn(model, data_loader, optimizer, criterion, save_model=False):
+def train_fn(model, data_loader, optimizer, loss_fn, save_model=False):
     model.train()
     fin_loss = 0
-    tk = tqdm(data_loader, total=len(data_loader))
-    for data in tk:
-        # for (key, value) in data:
-        #     data[key] = value.to(config.DEVICE)
-        x = data[0].to(config.DEVICE)
-        targets = data[1].to(config.DEVICE)
+    model_outputs = []
+    model_targets = []
+    tk_iterator = tqdm(data_loader, total=len(data_loader))
+    for data in tk_iterator:
+        # an item of the data is available as a dictionary
+        for (key, value) in data.items():
+            data[key] = value.to(config.DEVICE)
+
         optimizer.zero_grad()
-        out = model(x)
-        loss = criterion(out, targets)
-        loss.backward()
-        optimizer.step()
+        with torch.set_grad_enabled(True):
+            out = model(**data)
+            loss = loss_fn(out, data["targets"])
+            loss.backward()
+            optimizer.step()
+            model_targets.extend(data["targets"].detach().cpu().numpy())
+            model_outputs.extend(out.detach().cpu().numpy())
         fin_loss += loss.item()
 
-    if save_model:
-        save_model_checkpoint(model, optimizer, loss, config.CHECKPOINT_PATH)
+    # if save_model:
+    #     save_model_checkpoint(model, optimizer, loss, config.CHECKPOINT_PATH)
 
-    return fin_loss/len(data_loader)
+    return np.array(model_targets), np.array(model_outputs), fin_loss/len(data_loader)
 
 
-def eval_fn(model, data_loader, criterion):
+def eval_fn(model, data_loader, loss_fn):
     model.eval()
     fin_loss = 0
-    fin_preds = []
+    model_outputs = []
+    model_targets = []
     with torch.no_grad():
-        tk = tqdm(data_loader, total=len(data_loader))
-        for data in tk:
-            # for key, value in data.items():
-            #     data[key] = value.to(config.DEVICE)
-            x = data[0].to(config.DEVICE)
-            targets = data[1].to(config.DEVICE)
-            out = model(x)
-            loss = criterion(out, targets)
-            _, batch_preds = torch.max(out.data, 1)
+        tk_iterator = tqdm(data_loader, total=len(data_loader))
+        for data in tk_iterator:
+            for (key, value) in data.items():
+                data[key] = value.to(config.DEVICE)
+            out = model(**data)
+            loss = loss_fn(out, data["targets"])
+            model_outputs.extend(out.detach().cpu().numpy())
+            model_targets.extend(data["targets"].detach().cpu().numpy())
             fin_loss += loss.item()
-            fin_preds.append(batch_preds)
-        return fin_preds, fin_loss / len(data_loader)
+
+        return np.array(model_targets), np.array(model_outputs), fin_loss / len(data_loader)
