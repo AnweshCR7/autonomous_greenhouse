@@ -4,6 +4,8 @@ import numpy as np
 import cv2
 import config
 import matplotlib.pyplot as plt
+import pandas as pd
+import pickle
 # from PIL import Image
 # from PIL import ImageFile
 
@@ -15,12 +17,15 @@ def plot_image(img):
 
 
 class DataLoaderLettuceNet:
-    def __init__(self, img_paths, meta_data, center_crop=None, resize=None):
+    def __init__(self, img_paths, metadata, center_crop=None, resize=None):
 
         self.img_paths = img_paths
-        self.targets_list = meta_data
+        # self.targets_list = metadata
+        self.targets_df = pd.read_csv(metadata)
         self.center_crop = center_crop
         self.resize = resize
+        # self.scalerfile = config.SCALERFILE
+        self.scaler = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE}", 'rb'))
 
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
@@ -54,11 +59,25 @@ class DataLoaderLettuceNet:
         image = cv2.imread(self.img_paths[index])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
         # Get the image number
-        image_num = self.img_paths[index].split('/')[-1].split('.')[0].split('_')[1]
-        target_dict = self.targets_list[f"Image{image_num}"]
-        targets = []
-        for feature in config.FEATURES:
-            targets.append(target_dict[feature])
+        image_num = self.img_paths[index].split('/')[-1].split('.')[0].split('_')[-1]
+        '''
+        This will take care of all augmentations that stem from the original image name as long as we prefix names in the augmented counterparts.
+        Reason: the image number is the same for all augmentations.
+        '''
+        # WHEN USING .csv FILE
+        targets = self.targets_df[self.targets_df["ImageName"] == f"Image{image_num}"]
+        if targets.shape[0] == 0:
+            print(f"Image{image_num}")
+        targets = targets[config.FEATURES].values
+        targets = self.scaler.transform(targets).flatten()
+        # for feature in config.FEATURES:
+        #     targets.append(target_dict[feature])
+
+        # WHEN USING .json FILE
+        # target_dict = self.targets_list[f"Image{image_num}"]
+        # targets = []
+        # for feature in config.FEATURES:
+        #     targets.append(target_dict[feature])
 
         # convert to numpy array
         image = np.array(image)
@@ -73,5 +92,5 @@ class DataLoaderLettuceNet:
 
         return {
             "images": torch.tensor(image, dtype=torch.float),
-            "targets": torch.tensor(targets, dtype=torch.long)
+            "targets": torch.tensor(targets, dtype=torch.float)
         }

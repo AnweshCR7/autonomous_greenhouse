@@ -1,5 +1,11 @@
 # DATA_DIR = "/content/drive/MyDrive/data/FirstTrainingData"
 # JSON_FILE = "/content/drive/MyDrive/data/FirstTrainingData/GroundTruth.json"
+# TRAIN_METADATA = "/content/drive/MyDrive/data/metadata/TrainGroundTruth.csv"
+# TEST_METADATA = "/content/drive/MyDrive/data/metadata/TestGroundTruth.csv"
+# SCALER_PATH = "/content/drive/MyDrive/data/metadata/"
+# SCALERFILE = "scaler.sav"
+# CHECKPOINT_PATH = "../checkpoint"
+# CHECKPOINT_NAME = "running_model_1"
 # CHECKPOINT_PATH = "/content/drive/MyDrive/data/GreenHouse/checkpoint"
 # PLOT_PATH = "/content/drive/MyDrive/data/GreenHouse/plots"
 # NUM_WORKERS = 1
@@ -10,6 +16,10 @@
 
 DATA_DIR = "../data/FirstTrainingData"
 JSON_FILE = "../data/FirstTrainingData/GroundTruth.json"
+TRAIN_METADATA = "../data/metadata/TrainGroundTruth.csv"
+TEST_METADATA = "../data/metadata/TestGroundTruth.csv"
+SCALER_PATH = "../data/metadata/"
+SCALERFILE = "scaler.sav"
 CHECKPOINT_PATH = "../checkpoint"
 CHECKPOINT_NAME = "running_model_1"
 PLOT_PATH = "../plots"

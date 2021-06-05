@@ -16,12 +16,20 @@ from models.lettuceNet import LettuceNet
 from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import DataLoaderLettuceNet
 import json
+import pickle
 import pandas as pd
+import re
 
 
 def compute_criteria(targets, predictions):
+    # The targets and predictions are both scaled... Need to invert their scaling.
+    scaler = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE}", 'rb'))
+
     targets_df = pd.DataFrame(targets, columns=config.FEATURES)
     predictions_df = pd.DataFrame(predictions, columns=config.FEATURES)
+
+    targets_df = scaler.inverse_transform(targets_df)
+    predictions_df = scaler.inverse_transform(predictions_df)
 
     error_log = {}
     for column in targets_df.columns:
@@ -65,16 +73,32 @@ def run_training():
     meta_data = json.load(f)
     measurements = meta_data["Measurements"]
 
-    img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
+    train_metadata_csv = config.TRAIN_METADATA
+    test_metadata_csv = config.TEST_METADATA
+
+    # img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
+    train_img_paths = []
+    test_img_paths = []
     # Ad hoc at this point
-    train_img_paths = img_paths[:180]
-    test_img_paths = img_paths[180:]
+    train_df = pd.read_csv(train_metadata_csv)
+    test_df = pd.read_csv(test_metadata_csv)
+
+    # train_indices = [int(s) for s in image_name.split() if s.isdigit() for image_name in train_df["ImageName"].values]
+    for image_name in train_df["ImageName"].values:
+        image_index = int(re.findall("\d+", image_name)[0])
+        train_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+
+    train_img_paths = train_img_paths[:16]
+
+    for image_name in test_df["ImageName"].values:
+        image_index = int(re.findall("\d+", image_name)[0])
+        test_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
 
     # --------------------------------------
     # Build Train Dataloaders
     # --------------------------------------
 
-    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, meta_data=measurements, center_crop=700, resize=(224,224))
+    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=train_metadata_csv, center_crop=700, resize=(224, 224))
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_set,
@@ -87,7 +111,7 @@ def run_training():
     # -----------------------------
     # Build Validation Dataloaders
     # -----------------------------
-    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, meta_data=measurements, center_crop=700, resize=(224,224))
+    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, metadata=test_metadata_csv, center_crop=700, resize=(224,224))
     test_loader = torch.utils.data.DataLoader(
         dataset=test_set,
         batch_size=config.BATCH_SIZE,
