@@ -33,6 +33,8 @@ class DataLoaderLettuceNet:
         #     RandomBrightnessContrast(0.3, 0.3),
         #     Cutout(max_h_size=32, max_w_size=32, p=1)
         # ]
+
+        # This is more like in-place augmentation
         self.augmentation_pipeline = A.Compose(
             [
                 A.CenterCrop(self.center_crop, self.center_crop),
