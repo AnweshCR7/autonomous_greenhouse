@@ -11,6 +11,7 @@
 DATA_DIR = "../data/FirstTrainingData"
 JSON_FILE = "../data/FirstTrainingData/GroundTruth.json"
 CHECKPOINT_PATH = "../checkpoint"
+CHECKPOINT_NAME = "running_model_1"
 PLOT_PATH = "../plots"
 BATCH_SIZE = 8
 IMAGE_WIDTH = 300
