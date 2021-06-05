@@ -62,7 +62,7 @@ def augment(dataset_dir, augmentations, save_copy=False):
 
 
 if __name__ == '__main__':
-    dataset_dir = "../../data/FirstTrainingData_AUG"
+    dataset_dir = "../data/FirstTrainingData_AUG"
     augmentations = ["horizontal_flip"]
     # expect to increase the dataset 4x
     augment(dataset_dir, augmentations, save_copy=False)
