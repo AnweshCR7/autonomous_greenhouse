@@ -25,11 +25,11 @@ def compute_criteria(targets, predictions):
     # The targets and predictions are both scaled... Need to invert their scaling.
     scaler = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE}", 'rb'))
 
+    targets = scaler.inverse_transform(targets)
+    predictions = scaler.inverse_transform(predictions)
+
     targets_df = pd.DataFrame(targets, columns=config.FEATURES)
     predictions_df = pd.DataFrame(predictions, columns=config.FEATURES)
-
-    targets_df = scaler.inverse_transform(targets_df)
-    predictions_df = scaler.inverse_transform(predictions_df)
 
     error_log = {}
     for column in targets_df.columns:
@@ -87,12 +87,18 @@ def run_training():
     for image_name in train_df["ImageName"].values:
         image_index = int(re.findall("\d+", image_name)[0])
         train_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+        train_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
+        train_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
+        train_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
 
-    train_img_paths = train_img_paths[:16]
+    # train_img_paths = train_img_paths[:16]
 
     for image_name in test_df["ImageName"].values:
         image_index = int(re.findall("\d+", image_name)[0])
         test_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+        test_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
+        test_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
+        test_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
 
     # --------------------------------------
     # Build Train Dataloaders
