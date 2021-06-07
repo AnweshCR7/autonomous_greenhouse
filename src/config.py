@@ -1,3 +1,9 @@
+
+# Common settings
+lr = 0.001
+FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafArea']
+
+## UNCOMMENT IF USING COLAB
 # DATA_DIR = "/content/drive/MyDrive/data/FirstTrainingData"
 # JSON_FILE = "/content/drive/MyDrive/data/FirstTrainingData/GroundTruth.json"
 # TRAIN_METADATA = "/content/drive/MyDrive/data/metadata/TrainGroundTruth.csv"
@@ -12,10 +18,10 @@
 # BATCH_SIZE = 32
 # EPOCHS = 10
 # RANDOM_SEED = 42
-
 # PREDICTION_DATA_DIR = "/content/drive/MyDrive/data/GreenHouse/ImagesFor_June7"
 # SAVE_PREDICTIONS_DIR = "./"
 
+## COMMENT IF USING COLAB
 DATA_DIR = "../data/FirstTrainingData"
 JSON_FILE = "../data/FirstTrainingData/GroundTruth.json"
 TRAIN_METADATA = "../data/metadata/TrainGroundTruth.csv"
@@ -35,6 +41,3 @@ RANDOM_SEED = 42
 
 PREDICTION_DATA_DIR = "../data/ImagesFor_June7"
 SAVE_PREDICTIONS_DIR = "./"
-
-lr = 0.001
-FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafArea']
