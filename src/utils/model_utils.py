@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+import config
 import matplotlib.pyplot as plt
 
 
@@ -21,7 +22,7 @@ def plot_loss(train_loss_data, test_loss_data, plot_path):
 
 
 def save_model_checkpoint(model, optimizer, loss, checkpoint_path):
-    save_filename = "running_model.pt"
+    save_filename = f"{config.CHECKPOINT_NAME}.pt"
     # checkpoint_path = os.path.join(checkpoint_path, save_filename)
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
@@ -40,12 +41,12 @@ def load_model_if_checkpointed(model, optimizer, checkpoint_path, load_on_cpu=Fa
     checkpoint_flag = False
 
     # check if checkpoint exists
-    if os.path.exists(os.path.join(checkpoint_path, "running_model.pt")):
+    if os.path.exists(os.path.join(checkpoint_path, f"{config.CHECKPOINT_NAME}.pt")):
         checkpoint_flag = True
         if load_on_cpu:
-            checkpoint = torch.load(os.path.join(checkpoint_path, "running_model.pt"), map_location=torch.device('cpu'))
+            checkpoint = torch.load(os.path.join(checkpoint_path, f"{config.CHECKPOINT_NAME}.pt"), map_location=torch.device('cpu'))
         else:
-            checkpoint = torch.load(os.path.join(checkpoint_path, "running_model.pt"))
+            checkpoint = torch.load(os.path.join(checkpoint_path, f"{config.CHECKPOINT_NAME}.pt"))
 
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

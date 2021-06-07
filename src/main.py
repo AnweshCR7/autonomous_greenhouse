@@ -16,10 +16,51 @@ from models.lettuceNet import LettuceNet
 from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import DataLoaderLettuceNet
 import json
+import pickle
 import pandas as pd
+import re
 
 
+# Invert the scaled features to original space
+def invert_scaling(data):
+    # The model outputs scaled data.. Need to invert their scaling.
+    scaler = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE}", 'rb'))
+    return scaler.inverse_transform(data)
+
+
+# Convert the predictions to JSON
+def convert_to_json(predictions, image_paths):
+    predictions = invert_scaling(predictions)
+
+    data = {}
+    data["Measurements"] = {}
+
+    for idx, image_path in enumerate(image_paths):
+        image_predictions = predictions[idx, :]
+        image_name = image_path.split('/')[-1]
+        image_num = image_name.split('.')[0].split('_')[-1]
+        prediction_object = {
+            "RGBImage": image_name,
+            "DebthInformation": f"Debth_{image_num}.png",
+            "FreshWeightShoot": image_predictions[0].astype('float'),
+            "DryWeightShoot": image_predictions[1].astype('float'),
+            "Height": image_predictions[2].astype('float'),
+            "Diameter": image_predictions[3].astype('float'),
+            "LeafArea": image_predictions[4].astype('float')
+        }
+        data["Measurements"][f"Image{idx+1}"] = prediction_object
+
+    with open(f"{config.SAVE_PREDICTIONS_DIR}/Images.json", 'w+') as outfile:
+        json_dumps_str = json.dumps(data, indent=4)
+        print(json_dumps_str, file=outfile)
+
+
+# Compute the NMSE
 def compute_criteria(targets, predictions):
+
+    targets = invert_scaling(targets)
+    predictions = invert_scaling(predictions)
+
     targets_df = pd.DataFrame(targets, columns=config.FEATURES)
     predictions_df = pd.DataFrame(predictions, columns=config.FEATURES)
 
@@ -65,16 +106,38 @@ def run_training():
     meta_data = json.load(f)
     measurements = meta_data["Measurements"]
 
-    img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
+    train_metadata_csv = config.TRAIN_METADATA
+    test_metadata_csv = config.TEST_METADATA
+
+    # img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
+    train_img_paths = []
+    test_img_paths = []
     # Ad hoc at this point
-    train_img_paths = img_paths[:180]
-    test_img_paths = img_paths[180:]
+    train_df = pd.read_csv(train_metadata_csv)
+    test_df = pd.read_csv(test_metadata_csv)
+
+    # train_indices = [int(s) for s in image_name.split() if s.isdigit() for image_name in train_df["ImageName"].values]
+    for image_name in train_df["ImageName"].values:
+        image_index = int(re.findall("\d+", image_name)[0])
+        train_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+        train_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
+        train_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
+        train_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
+
+    # train_img_paths = train_img_paths[:16]
+
+    for image_name in test_df["ImageName"].values:
+        image_index = int(re.findall("\d+", image_name)[0])
+        test_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+        test_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
+        test_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
+        test_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
 
     # --------------------------------------
     # Build Train Dataloaders
     # --------------------------------------
 
-    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, meta_data=measurements, center_crop=700, resize=(224,224))
+    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=train_metadata_csv, center_crop=700, resize=(224, 224))
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_set,
@@ -87,7 +150,7 @@ def run_training():
     # -----------------------------
     # Build Validation Dataloaders
     # -----------------------------
-    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, meta_data=measurements, center_crop=700, resize=(224,224))
+    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, metadata=test_metadata_csv, center_crop=700, resize=(224,224))
     test_loader = torch.utils.data.DataLoader(
         dataset=test_set,
         batch_size=config.BATCH_SIZE,
@@ -175,5 +238,78 @@ def run_training():
     print("done")
 
 
+def generate_prediction():
+    model = LettuceNet()
+
+    # Fix random seed for reproducibility
+    np.random.seed(config.RANDOM_SEED)
+    torch.backends.cudnn.deterministic = True
+    torch.manual_seed(config.RANDOM_SEED)
+    if torch.cuda.is_available():
+        print('GPU available... using GPU')
+        torch.cuda.manual_seed_all(config.RANDOM_SEED)
+    else:
+        print("GPU not available, using CPU")
+
+    if config.CHECKPOINT_PATH:
+        checkpoint_path = os.path.join(os.getcwd(), config.CHECKPOINT_PATH)
+        if not os.path.exists(checkpoint_path):
+            os.makedirs(checkpoint_path)
+            print("Output directory is created")
+
+    model.to(config.DEVICE)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, factor=0.8, patience=5, verbose=True
+    )
+
+
+    prediction_img_paths = glob.glob(f"{config.PREDICTION_DATA_DIR}/RGB_*")
+
+    # --------------------------------------
+    # Build Train Dataloaders
+    # --------------------------------------
+
+    prediction_set = DataLoaderLettuceNet(img_paths=prediction_img_paths, metadata=None, center_crop=700,
+                                     resize=(224, 224), predict=True)
+
+    prediction_loader = torch.utils.data.DataLoader(
+        dataset=prediction_set,
+        batch_size=config.BATCH_SIZE,
+        num_workers=config.NUM_WORKERS,
+        shuffle=False,
+        # collate_fn=collate_fn
+    )
+
+    print('\nPrediction Data loaded!')
+
+    # Code to use multiple GPUs (if available)
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        model = torch.nn.DataParallel(model)
+
+    # --------------------------------------
+    # Load checkpointed model (if  present)
+    # --------------------------------------
+    if config.DEVICE == "cpu":
+        load_on_cpu = True
+    else:
+        load_on_cpu = False
+    model, optimizer, checkpointed_loss, checkpoint_flag = load_model_if_checkpointed(model, optimizer, checkpoint_path,
+                                                                                      load_on_cpu=load_on_cpu)
+    if checkpoint_flag:
+        print(f"Checkpoint Found! Loading from checkpoint :: LOSS={checkpointed_loss}")
+    else:
+        print("Checkpoint Not Found!")
+
+    predictions = engine.predict_fn(model, prediction_loader)
+
+    # Convert predictions to JSON
+    convert_to_json(predictions, prediction_img_paths)
+    print("done")
+
+
 if __name__ == '__main__':
-    run_training()
+    # run_training()
+    generate_prediction()
