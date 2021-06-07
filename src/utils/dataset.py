@@ -17,11 +17,15 @@ def plot_image(img):
 
 
 class DataLoaderLettuceNet:
-    def __init__(self, img_paths, metadata, center_crop=None, resize=None):
+    def __init__(self, img_paths, metadata, center_crop=None, resize=None, predict=False):
 
         self.img_paths = img_paths
         # self.targets_list = metadata
-        self.targets_df = pd.read_csv(metadata)
+        self.predict = predict
+        if not self.predict:
+            self.targets_df = pd.read_csv(metadata)
+        else:
+            self.targets_df = None
         self.center_crop = center_crop
         self.resize = resize
         # self.scalerfile = config.SCALERFILE
@@ -60,6 +64,21 @@ class DataLoaderLettuceNet:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
         # Get the image number
         image_num = self.img_paths[index].split('/')[-1].split('.')[0].split('_')[-1]
+
+        # convert to numpy array
+        image = np.array(image)
+        # Apply image transforms
+        image = self.augmentation_pipeline(image=image)['image']
+        # if self.resize is not None:
+        #     # write as HxW
+        #     image = cv2.resize(image, (self.resize[1], self.resize[0]), interpolation=cv2.INTER_CUBIC)
+
+        # Convert to form: CxHxW
+        image = np.transpose(image, (2,0,1)).astype(np.float32)
+
+        if self.predict:
+            return torch.tensor(image, dtype=torch.float)
+
         '''
         This will take care of all augmentations that stem from the original image name as long as we prefix names in the augmented counterparts.
         Reason: the image number is the same for all augmentations.
@@ -78,17 +97,6 @@ class DataLoaderLettuceNet:
         # targets = []
         # for feature in config.FEATURES:
         #     targets.append(target_dict[feature])
-
-        # convert to numpy array
-        image = np.array(image)
-        # Apply image transforms
-        image = self.augmentation_pipeline(image=image)['image']
-        # if self.resize is not None:
-        #     # write as HxW
-        #     image = cv2.resize(image, (self.resize[1], self.resize[0]), interpolation=cv2.INTER_CUBIC)
-
-        # Convert to form: CxHxW
-        image = np.transpose(image, (2,0,1)).astype(np.float32)
 
         return {
             "images": torch.tensor(image, dtype=torch.float),

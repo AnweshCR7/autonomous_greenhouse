@@ -4,7 +4,6 @@
 # TEST_METADATA = "/content/drive/MyDrive/data/metadata/TestGroundTruth.csv"
 # SCALER_PATH = "/content/drive/MyDrive/data/metadata/"
 # SCALERFILE = "scaler.sav"
-# CHECKPOINT_PATH = "../checkpoint"
 # CHECKPOINT_NAME = "running_model_1"
 # CHECKPOINT_PATH = "/content/drive/MyDrive/data/GreenHouse/checkpoint"
 # PLOT_PATH = "/content/drive/MyDrive/data/GreenHouse/plots"
@@ -14,6 +13,9 @@
 # EPOCHS = 10
 # RANDOM_SEED = 42
 
+# PREDICTION_DATA_DIR = "/content/drive/MyDrive/data/GreenHouse/ImagesFor_June7"
+# SAVE_PREDICTIONS_DIR = "./"
+
 DATA_DIR = "../data/FirstTrainingData"
 JSON_FILE = "../data/FirstTrainingData/GroundTruth.json"
 TRAIN_METADATA = "../data/metadata/TrainGroundTruth.csv"
@@ -21,7 +23,7 @@ TEST_METADATA = "../data/metadata/TestGroundTruth.csv"
 SCALER_PATH = "../data/metadata/"
 SCALERFILE = "scaler.sav"
 CHECKPOINT_PATH = "../checkpoint"
-CHECKPOINT_NAME = "running_model_1"
+CHECKPOINT_NAME = "running_model_scaled"
 PLOT_PATH = "../plots"
 BATCH_SIZE = 8
 IMAGE_WIDTH = 300
@@ -30,6 +32,9 @@ NUM_WORKERS = 0
 DEVICE = "cpu"
 EPOCHS = 2
 RANDOM_SEED = 42
+
+PREDICTION_DATA_DIR = "../data/ImagesFor_June7"
+SAVE_PREDICTIONS_DIR = "./"
 
 lr = 0.001
 FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafArea']
