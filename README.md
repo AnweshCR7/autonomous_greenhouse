@@ -1,26 +1,26 @@
-# Deep Learning Boilerplate code or Scaffolding.
-A boilerplate to get started with any Deep Learning project (Vision)
+# CYBERPLANT
+A computer vision project for autonomous greenhouses
 
 #### Dataset:
-MNIST dataset downloaded using torchvision
+Custom
 
 ## Experiments
 Shared parameters:
 ```
 batch size: 32
-Image dimensions (HxW): 28x28
-Model: LeNet
-initial learning rate: 3e-4
-epochs: 10
+Image dimensions (HxW): 224x224 (center-cropped and resized)
+Model: Custom (ResNet18 Backbone)
+initial learning rate: 1e-3
+epochs: 30
 ```
 
 **Dataset-split**: 10% for Validation
 ### Experiment 1
 
-|                | **Loss** |
+|                | **NMSE Loss** |
 |----------------|----------------|
-| Training set |        0.007  |
-| Evaluation set |        0.031  |
+| June 7 (prelim) |       0.918 |
 
 
-![plot](results/train-test_loss.png)
+
+<!-- ![plot](results/train-test_loss.png) -->
