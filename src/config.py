@@ -20,6 +20,7 @@ FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafAre
 # RANDOM_SEED = 42
 # PREDICTION_DATA_DIR = "/content/drive/MyDrive/data/GreenHouse/ImagesFor_June7"
 # SAVE_PREDICTIONS_DIR = "./"
+# TENSORBOARD = "/content/drive/MyDrive/data/GreenHouse/runs"
 
 ## COMMENT IF USING COLAB
 DATA_DIR = "../data/FirstTrainingData"
@@ -29,7 +30,7 @@ TEST_METADATA = "../data/metadata/TestGroundTruth.csv"
 SCALER_PATH = "../data/metadata/"
 SCALERFILE = "scaler.sav"
 CHECKPOINT_PATH = "../checkpoint"
-CHECKPOINT_NAME = "running_model_scaled"
+CHECKPOINT_NAME = "resnet50_pretrained"
 PLOT_PATH = "../plots"
 BATCH_SIZE = 8
 IMAGE_WIDTH = 300
@@ -38,6 +39,7 @@ NUM_WORKERS = 0
 DEVICE = "cpu"
 EPOCHS = 2
 RANDOM_SEED = 42
+TENSORBOARD = "./runs"
 
 PREDICTION_DATA_DIR = "../data/ImagesFor_June7"
 SAVE_PREDICTIONS_DIR = "./"

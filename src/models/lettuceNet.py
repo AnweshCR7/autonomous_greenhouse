@@ -71,7 +71,7 @@ class LettuceNet(nn.Module):
 
         # resnet o/p -> bs x 1000
         # self.resnet18 = resnet18(pretrained=False)
-        resnet = models.resnet18(pretrained=False)
+        resnet = models.resnet18(pretrained=True)
         modules = list(resnet.children())[:-1]
 
         self.resnet18 = nn.Sequential(*modules)

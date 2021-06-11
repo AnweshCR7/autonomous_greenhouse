@@ -100,7 +100,7 @@ def run_training():
     loss_fn = nn.L1Loss()
 
     # TensorBoard
-    writer = SummaryWriter()
+    writer = SummaryWriter(config.TENSORBOARD)
 
     f = open(config.JSON_FILE)
     meta_data = json.load(f)
@@ -115,7 +115,8 @@ def run_training():
     # Ad hoc at this point
     train_df = pd.read_csv(train_metadata_csv)
     test_df = pd.read_csv(test_metadata_csv)
-
+    train_df = pd.concat([train_df, test_df])
+    train_df.to_csv("./FullGroundTruth.csv", index=False)
     # train_indices = [int(s) for s in image_name.split() if s.isdigit() for image_name in train_df["ImageName"].values]
     for image_name in train_df["ImageName"].values:
         image_index = int(re.findall("\d+", image_name)[0])

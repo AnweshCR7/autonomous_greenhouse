@@ -47,7 +47,7 @@ class DataLoaderLettuceNet:
         self.augmentation_pipeline = A.Compose(
             [
                 A.CenterCrop(self.center_crop, self.center_crop),
-                A.HorizontalFlip(p=0.5),
+                # A.HorizontalFlip(p=0.5),
                 A.Resize(resize[1], resize[0])
                 # A.Normalize(
                 #     mean, std, max_pixel_value=255.0, always_apply=True
