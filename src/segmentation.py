@@ -26,6 +26,7 @@ import segmentation_models_pytorch as smp
 import albumentations as albu
 from label import Label
 import matplotlib.pyplot as plt
+from transforms import get_training_augmentation, get_validation_augmentation
 
 
 def to_tensor(x, **kwargs):
@@ -182,7 +183,7 @@ def run_training():
     # Build Train Dataloaders
     # --------------------------------------
 
-    train_set = DataLoaderSegmentation(img_paths=img_paths, mask_paths=mask_paths, metadata=config.TRAIN_METADATA, center_crop=None, resize=(224, 224), preprocessing=get_preprocessing(preprocessing_fn))
+    train_set = DataLoaderSegmentation(img_paths=img_paths, mask_paths=mask_paths, metadata=config.TRAIN_METADATA, center_crop=None, resize=(224, 224), preprocessing=get_preprocessing(preprocessing_fn), augmentation=get_training_augmentation())
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_set,
@@ -195,7 +196,7 @@ def run_training():
     # -----------------------------
     # Build Validation Dataloaders
     # -----------------------------
-    test_set = DataLoaderSegmentation(img_paths=img_paths, mask_paths=mask_paths, metadata=config.TEST_METADATA, center_crop=None, resize=(224,224), preprocessing=get_preprocessing(preprocessing_fn))
+    test_set = DataLoaderSegmentation(img_paths=img_paths, mask_paths=mask_paths, metadata=config.TEST_METADATA, center_crop=None, resize=(224,224), preprocessing=get_preprocessing(preprocessing_fn), augmentation=get_validation_augmentation())
     test_loader = torch.utils.data.DataLoader(
         dataset=test_set,
         batch_size=config.BATCH_SIZE,
@@ -439,5 +440,5 @@ def generate_prediction():
 
 
 if __name__ == '__main__':
-    # run_training()
-    generate_prediction()
+    run_training()
+    # generate_prediction()
