@@ -6,7 +6,8 @@ def get_training_augmentation():
         albu.HorizontalFlip(p=0.5),
         albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=20, shift_limit=0.2, p=0.8, border_mode=0),
         albu.PadIfNeeded(min_height=320, min_width=320, always_apply=True, border_mode=0),
-        albu.RandomCrop(height=320, width=320, always_apply=True),
+        # albu.RandomCrop(height=320, width=320, always_apply=True),
+        albu.Resize(height=320, width=320),
         albu.IAAAdditiveGaussianNoise(p=0.1),
         albu.IAAPerspective(p=0.5),
         albu.OneOf(

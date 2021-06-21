@@ -14,7 +14,7 @@ import config
 from utils.model_utils import plot_loss, load_model_if_checkpointed, save_model_checkpoint
 from models.simpleCNN import SimpleCNN
 from models.lettuceNet import LettuceNet
-from models.segmentationNet import SegmentationNet
+# from models.segmentationNet import SegmentationNet
 from torch.utils.tensorboard import SummaryWriter
 from utils.datasetSegmentation import DataLoaderSegmentation
 import json
@@ -58,18 +58,39 @@ def plot_image(img):
 
 def plot_seg(input_image, gt_masks, predicted_masks):
     # create a color pallette, selecting a color for each class
-    palette = torch.tensor([2 ** 25 - 1, 2 ** 15 - 1, 2 ** 5 - 1])
-    colors = torch.as_tensor([i for i in range(5)])[:, None] * palette
-    colors = (colors % 255).numpy().astype("uint8")
+    # palette = torch.tensor([2 ** 25 - 1, 2 ** 15 - 1, 2 ** 5 - 1])
 
-    # plot the semantic segmentation predictions of 5 classes in each color
-    r = Image.fromarray(predicted_masks).resize(input_image.size)
-    r.putpalette(colors)
+    palette = {
+        0: (0, 0, 0),
+        1: (255, 0, 0),
+        2: (0, 255, 0),
+        3: (0, 0, 255),
+        4: (0, 255, 255),
+    }
 
-    import matplotlib.pyplot as plt
-    plt.imshow(r)
-    # plt.show()
+    # colors = torch.as_tensor([i for i in range(5)])[:, None] * palette
+    # colors = (colors % 255).numpy().astype("uint8")
+    image = np.zeros((4, 3), dtype=np.uint8)
 
+    fig = plt.figure(figsize=(50, 50))  # width, height in inches
+
+    for i in range(5):
+        sub = fig.add_subplot(1, 5, i + 1)
+        sub.imshow(predicted_masks[i, :, :], interpolation='nearest')
+        sub = fig.add_subplot(2, 5, i+1)
+        sub.imshow(gt_masks[i, :, :], interpolation='nearest')
+
+
+    # for j in range(4):
+    #     image[j] = palette[np.argmax(gt_masks[j])]
+    # # plot the semantic segmentation predictions of 5 classes in each color
+    # r = Image.fromarray(predicted_masks).resize(input_image.size)
+    # r.putpalette(colors)
+    #
+    # import matplotlib.pyplot as plt
+    # plt.imshow(r)
+    plt.show()
+    print('hello')
 
 # Invert the scaled features to original space
 def invert_scaling(data):
@@ -125,7 +146,7 @@ def compute_criteria(targets, predictions):
 def run_training():
     # model = SegmentationNet()
 
-    ENCODER = 'efficientnet-b3'
+    ENCODER = 'se_resnext50_32x4d'
     ENCODER_WEIGHTS = 'imagenet'
     CLASSES = [cls for cls in Label]
     ACTIVATION = 'softmax2d'  # could be None for logits or 'softmax2d' for multicalss segmentation
@@ -163,6 +184,9 @@ def run_training():
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, factor=0.8, patience=5, verbose=True
     )
+    # criterion = torch.nn.BCEWithLogitsLoss()
+    # loss_fn = criterion(output, target)
+
     loss_fn = smp.utils.losses.DiceLoss()
 
     # TensorBoard
@@ -174,10 +198,10 @@ def run_training():
 
     img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
     img_paths.sort()
-    img_paths = img_paths[4:8]
+    img_paths = img_paths
     mask_paths = glob.glob(f"{config.TARGET_ANNOT_DIR}/Seg_*")
     mask_paths.sort()
-    mask_paths = mask_paths[4:8]
+    mask_paths = mask_paths
 
     # --------------------------------------
     # Build Train Dataloaders
@@ -228,6 +252,7 @@ def run_training():
     metrics = [
         smp.utils.metrics.IoU(threshold=0.5),
     ]
+    # loss_fn = torch.nn.BCEWithLogitsLoss()
     train_epoch = smp.utils.train.TrainEpoch(
         model,
         loss=loss_fn,
@@ -322,7 +347,7 @@ def generate_prediction():
     # model = SegmentationNet()
 
 
-    ENCODER = 'efficientnet-b3'
+    ENCODER = 'se_resnext50_32x4d'
     ENCODER_WEIGHTS = 'imagenet'
     CLASSES = [cls for cls in Label]
     ACTIVATION = 'softmax2d'  # could be None for logits or 'softmax2d' for multicalss segmentation
@@ -362,14 +387,14 @@ def generate_prediction():
     #     optimizer, factor=0.8, patience=5, verbose=True
     # )
 
-    best_model = torch.load(f"{config.CHECKPOINT_PATH}/best_model.pth")
+    best_model = torch.load(f"{config.CHECKPOINT_PATH}/best_model.pth", map_location=torch.device(config.DEVICE))
 
     img_paths = glob.glob(f"{config.PREDICTION_DATA_DIR}/RGB_*")
     img_paths.sort()
-    img_paths = img_paths[:4]
+    img_paths = img_paths[4:8]
     mask_paths = glob.glob(f"{config.TARGET_ANNOT_DIR}/Seg_*")
     mask_paths.sort()
-    mask_paths = mask_paths[:4]
+    mask_paths = mask_paths[4:8]
     # --------------------------------------
     # Build Train Dataloaders
     # --------------------------------------

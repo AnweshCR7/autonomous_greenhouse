@@ -10,6 +10,7 @@ FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafAre
 # TEST_METADATA = "/content/drive/MyDrive/data/metadata/TestGroundTruth.csv"
 # SCALER_PATH = "/content/drive/MyDrive/data/metadata/"
 # SCALERFILE = "scaler.sav"
+# TARGET_ANNOT_DIR = "/content/drive/MyDrive/data/GreenHouse/segmentation"
 # CHECKPOINT_NAME = "running_model_1"
 # CHECKPOINT_PATH = "/content/drive/MyDrive/data/GreenHouse/checkpoint"
 # PLOT_PATH = "/content/drive/MyDrive/data/GreenHouse/plots"
@@ -43,5 +44,5 @@ RANDOM_SEED = 42
 TENSORBOARD = "./runs"
 CLASSES = ['SALANOVA', 'LUGANO', 'SATINE', 'APHYLION', 'PLATFORM']
 
-PREDICTION_DATA_DIR = "../data/ImagesFor_June14"
+PREDICTION_DATA_DIR = "../data/ImagesFor_June7"
 SAVE_PREDICTIONS_DIR = "./"

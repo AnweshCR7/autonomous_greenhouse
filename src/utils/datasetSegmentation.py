@@ -41,11 +41,11 @@ class DataLoaderSegmentation:
 
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
-        self.preprocess = transforms.Compose([
-            # transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std),
-            # transforms.Resize((resize[1], resize[0]))
-        ])
+        # self.preprocess = transforms.Compose([
+        #     # transforms.ToTensor(),
+        #     transforms.Normalize(mean=mean, std=std),
+        #     # transforms.Resize((resize[1], resize[0]))
+        # ])
 
         # # This is more like in-place augmentation
         # self.augmentation_pipeline = augmentation
@@ -102,10 +102,10 @@ class DataLoaderSegmentation:
             augmented_sample = self.augmentation_pipeline(image=image, mask=mask)
             image, mask = augmented_sample['image'], augmented_sample['mask']
 
-        # apply augmentations
-        if self.augmentation:
-            sample = self.augmentation(image=image, mask=mask)
-            image, mask = sample['image'], sample['mask']
+        # # apply augmentations
+        # if self.augmentation:
+        #     sample = self.augmentation(image=image, mask=mask)
+        #     image, mask = sample['image'], sample['mask']
 
         # apply preprocessing
         if self.preprocessing:

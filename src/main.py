@@ -29,16 +29,19 @@ def invert_scaling(data):
 
 
 # Convert the predictions to JSON
-def convert_to_json(predictions, image_paths):
-    predictions = invert_scaling(predictions)
+def convert_to_json(predictions_df):
+    # predictions = invert_scaling(predictions)
+    value_cols = ['LeafArea', 'FreshWeightShoot', 'DryWeightShoot']
+    predictions = predictions_df[value_cols]
 
     data = {}
     data["Measurements"] = {}
 
-    for idx, image_path in enumerate(image_paths):
+    for idx, image_name in enumerate(predictions_df.image_name):
         image_predictions = predictions[idx, :]
-        image_name = image_path.split('/')[-1]
-        image_num = image_name.split('.')[0].split('_')[-1]
+        # image_name = image_path.split('/')[-1]
+        # image_num = image_name.split('.')[0].split('_')[-1]
+        image_num = int(re.findall("\d+", image_name)[0])
         prediction_object = {
             "RGBImage": image_name,
             "DebthInformation": f"Debth_{image_num}.png",
@@ -50,7 +53,10 @@ def convert_to_json(predictions, image_paths):
         }
         data["Measurements"][f"Image{idx+1}"] = prediction_object
 
-    with open(f"{config.SAVE_PREDICTIONS_DIR}/Images.json", 'w+') as outfile:
+    # point to save dir
+    SAVE_PREDICTIONS_DIR = "./data/predictions"
+
+    with open(f"{SAVE_PREDICTIONS_DIR}/Images.json", 'w+') as outfile:
         json_dumps_str = json.dumps(data, indent=4)
         print(json_dumps_str, file=outfile)
 
@@ -312,5 +318,6 @@ def generate_prediction():
 
 
 if __name__ == '__main__':
+
     # run_training()
     generate_prediction()
