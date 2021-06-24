@@ -1,7 +1,8 @@
 
 # Common settings
 lr = 0.001
-FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafArea']
+FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'LeafArea']
+ADD_FEATURES = ['Diameter', 'Height', 'Area', 'Volume']
 
 ## UNCOMMENT IF USING COLAB
 # DATA_DIR = "/content/drive/MyDrive/data/FirstTrainingData"
@@ -27,10 +28,12 @@ DATA_DIR = "../data/FirstTrainingData"
 JSON_FILE = "../data/FirstTrainingData/GroundTruth.json"
 TRAIN_METADATA = "../data/metadata/TrainGroundTruth.csv"
 TEST_METADATA = "../data/metadata/TestGroundTruth.csv"
+TRAIN_ADD_FEATURES = "../data/features/X_train.csv"
+TEST_ADD_FEATURES = "../data/features/X_eval.csv"
 SCALER_PATH = "../data/metadata/"
 SCALERFILE = "scaler.sav"
 CHECKPOINT_PATH = "../checkpoint"
-CHECKPOINT_NAME = "resnet50_pretrained"
+CHECKPOINT_NAME = "running_model"
 PLOT_PATH = "../plots"
 BATCH_SIZE = 8
 IMAGE_WIDTH = 300
@@ -43,3 +46,4 @@ TENSORBOARD = "./runs"
 
 PREDICTION_DATA_DIR = "../data/ImagesFor_June7"
 SAVE_PREDICTIONS_DIR = "./"
+SEG_DIR = "../data/segmentation"

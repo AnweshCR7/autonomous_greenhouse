@@ -17,9 +17,11 @@ def plot_image(img):
 
 
 class DataLoaderLettuceNet:
-    def __init__(self, img_paths, metadata, center_crop=None, resize=None, predict=False):
+    def __init__(self, img_paths, metadata, center_crop=None, resize=None, predict=False, add_features=None):
 
         self.img_paths = img_paths
+        # if segmentation_paths is not None:
+        #     self.segmentation_paths = segmentation_paths
         # self.targets_list = metadata
         self.predict = predict
         if not self.predict:
@@ -30,6 +32,9 @@ class DataLoaderLettuceNet:
         self.resize = resize
         # self.scalerfile = config.SCALERFILE
         self.scaler = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE}", 'rb'))
+
+        if add_features:
+            self.add_features_df = pd.read_csv(add_features)
 
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
@@ -61,12 +66,34 @@ class DataLoaderLettuceNet:
     def __getitem__(self, index):
         # Image has 4 channels -> converting to RGB
         image = cv2.imread(self.img_paths[index])
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         # Get the image number
         image_num = self.img_paths[index].split('/')[-1].split('.')[0].split('_')[-1]
+        seg_mask = cv2.imread(f"{config.SEG_DIR}/Seg_{image_num}.png")
+        seg_mask = seg_mask[:, :, 0]
+        # Find class
+        cultivar = np.unique(seg_mask)[1]
+        # Get segmentation of class
+        seg_mask_lettuce = (seg_mask == cultivar).astype('uint8')
+        # expand single dim
+        seg_mask_lettuce = np.expand_dims(seg_mask_lettuce, axis=2)
+        segmented_image = cv2.bitwise_or(image, image, mask=seg_mask_lettuce)
 
         # convert to numpy array
-        image = np.array(image)
+        image = np.array(segmented_image)
+
+        # color to fill
+        color = np.array([0, 255, 0], dtype='uint8')
+
+        # # equal color where mask, else image
+        # # this would paint your object silhouette entirely with `color`
+        # masked_img = np.where(seg_mask[...], color, image)
+        #
+        # # use `addWeighted` to blend the two images
+        # # the object will be tinted toward `color`
+        # out = cv2.addWeighted(seg_mask, 0.8, masked_img, 0.2, 0)
+
+
         # Apply image transforms
         image = self.augmentation_pipeline(image=image)['image']
         # if self.resize is not None:
@@ -88,7 +115,13 @@ class DataLoaderLettuceNet:
         if targets.shape[0] == 0:
             print(f"Image{image_num}")
         targets = targets[config.FEATURES].values
-        targets = self.scaler.transform(targets).flatten()
+        # targets = self.scaler.transform(targets).flatten()
+
+        # Lets work with add_features
+        features = self.add_features_df[self.add_features_df["Unnamed: 0"] == f"Image{image_num}"]
+        features = features[config.ADD_FEATURES].values
+
+
         # for feature in config.FEATURES:
         #     targets.append(target_dict[feature])
 
@@ -100,5 +133,6 @@ class DataLoaderLettuceNet:
 
         return {
             "images": torch.tensor(image, dtype=torch.float),
-            "targets": torch.tensor(targets, dtype=torch.float)
+            "targets": torch.tensor(targets, dtype=torch.float),
+            "features": torch.tensor(features, dtype=torch.float)
         }

@@ -8,23 +8,26 @@ from sklearn.model_selection import train_test_split
 
 # Defunct
 def convert_to_csv():
-    f = open(config.JSON_FILE)
+    # f = open(config.JSON_FILE)
+    f = open("./GroundTrhyth_June8.json")
     meta_data = json.load(f)
     measurements = meta_data["Measurements"]
-    columns = ['ImageName', 'FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafArea']
+    columns = ['ImageName', 'Variety', 'FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafArea']
     data = []
     scaler = MinMaxScaler()
 
     for key in measurements.keys():
         cur_image_features = measurements[key]
-        data.append([key, cur_image_features['FreshWeightShoot'], cur_image_features['DryWeightShoot'], cur_image_features['Height'], cur_image_features['Diameter'], cur_image_features['LeafArea']])
+        data.append([key, cur_image_features['Variety'], cur_image_features['FreshWeightShoot'], cur_image_features['DryWeightShoot'], cur_image_features['Height'], cur_image_features['Diameter'], cur_image_features['LeafArea']])
 
     measurements_df = pd.DataFrame(data, columns=columns)
-    measurements_df[config.FEATURES] = scaler.fit_transform(measurements_df[config.FEATURES])
+    # measurements_df[config.FEATURES] = scaler.fit_transform(measurements_df[config.FEATURES])
+
     # scaled_measurements_df = scaler.fit_transform(measurements_df[config.FEATURES])
+    measurements_df.to_csv("./GroundTruth_June8.csv", index=False)
 
 # Use this
-def sort_json2csv(save_scaling=True):
+def sort_json2csv(save_scaling=False):
     f = open(config.JSON_FILE)
     meta_data = json.load(f)
     measurements = meta_data["Measurements"]
@@ -45,8 +48,12 @@ def sort_json2csv(save_scaling=True):
     measurements_df.reset_index(drop=True, inplace=True)
     # measurements_df.drop(['index'], axis=1)
 
+    train_idx = pd.read_csv("../data/features/X_train.csv")["Unnamed: 0"].values
+    test_idx = pd.read_csv("../data/features/X_eval.csv")["Unnamed: 0"].values
     # Lets try splitting like this for now
-    train_df, test_df = train_test_split(measurements_df, test_size=0.2)
+    # train_df, test_df = train_test_split(measurements_df, test_size=0.2)
+    train_df = measurements_df[measurements_df['ImageName'].isin(train_idx)]
+    test_df = measurements_df[measurements_df['ImageName'].isin(test_idx)]
     train_df.to_csv("./TrainGroundTruth.csv", index=False)
     test_df.to_csv("./TestGroundTruth.csv", index=False)
 
@@ -64,5 +71,5 @@ def sort_json2csv(save_scaling=True):
     print('hshshs')
 
 if __name__ == '__main__':
-    sort_json2csv(save_scaling=True)
-    # convert_to_csv()
+    # sort_json2csv(save_scaling=True)
+    sort_json2csv()

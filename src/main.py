@@ -108,6 +108,8 @@ def run_training():
 
     train_metadata_csv = config.TRAIN_METADATA
     test_metadata_csv = config.TEST_METADATA
+    train_add_features_csv = config.TRAIN_ADD_FEATURES
+    test_add_features_csv = config.TEST_ADD_FEATURES
 
     # img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
     train_img_paths = []
@@ -121,24 +123,26 @@ def run_training():
     for image_name in train_df["ImageName"].values:
         image_index = int(re.findall("\d+", image_name)[0])
         train_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
-        train_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
-        train_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
-        train_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
+        # train_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
+        # train_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
+        # train_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
 
     # train_img_paths = train_img_paths[:16]
 
     for image_name in test_df["ImageName"].values:
         image_index = int(re.findall("\d+", image_name)[0])
         test_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
-        test_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
-        test_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
-        test_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
+        # test_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
+        # test_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
+        # test_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
+
+    # segmentation_paths = glob.glob(f"{config.SEG_DIR}/*.png")
 
     # --------------------------------------
     # Build Train Dataloaders
     # --------------------------------------
 
-    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=train_metadata_csv, center_crop=700, resize=(224, 224))
+    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=train_metadata_csv, center_crop=700, resize=(224, 224), add_features=train_add_features_csv)
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_set,
@@ -312,5 +316,5 @@ def generate_prediction():
 
 
 if __name__ == '__main__':
-    # run_training()
-    generate_prediction()
+    run_training()
+    # generate_prediction()

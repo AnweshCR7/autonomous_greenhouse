@@ -4,6 +4,7 @@ from torch.nn import functional as F
 import torchvision.models as models
 import ssl
 import matplotlib.pyplot as plt
+import config
 
 ssl._create_default_https_context = ssl._create_stdlib_context
 
@@ -80,17 +81,23 @@ class LettuceNet(nn.Module):
         # self.avgpool = nn.AvgPool2d((10, 1))
         self.resnet_linear = nn.Linear(512, 1000)
         # Fully connected layer to regress the o/p of resnet -> 1 HR per clip
-        self.fc_regression = nn.Linear(1000, 5)
+        self.fc_regression = nn.Linear(1000, 10)
+        # 10 ft from fc regression and 4 form concatenating the extra features.
+        self.fc_regression2 = nn.Linear(14, len(config.FEATURES))
         # self.rnn = nn.GRU(input_size=10, hidden_size=10)
         # self.fc = nn.Linear(10, 10)
 
-    def forward(self, images, targets):
+    def forward(self, images, targets, features):
         # Need to have so as to reflect a batch_size = 1 // if batched then comment out
         x = self.resnet18(images)
         x = x.view(x.size(0), -1)
         # output dim: BSx1
         x = self.resnet_linear(x)
-        out = self.fc_regression(x)
+        x = self.fc_regression(x)
+        # Concat the additional features and regress
+        x = torch.cat((x, features.squeeze(1)), 1)
+        out = self.fc_regression2(x)
+        # fc_regression2
 
         return out
 
