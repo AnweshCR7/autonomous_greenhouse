@@ -19,7 +19,7 @@ def train_fn(model, data_loader, optimizer, loss_fn, save_model=False):
         optimizer.zero_grad()
         with torch.set_grad_enabled(True):
             out = model(**data)
-            loss = loss_fn(out, data["targets"])
+            loss = loss_fn(out, data["targets"].squeeze(1))
             loss.backward()
             optimizer.step()
             model_targets.extend(data["targets"].detach().cpu().numpy())
@@ -43,7 +43,7 @@ def eval_fn(model, data_loader, loss_fn):
             for (key, value) in data.items():
                 data[key] = value.to(config.DEVICE)
             out = model(**data)
-            loss = loss_fn(out, data["targets"])
+            loss = loss_fn(out, data["targets"].squeeze(1))
             model_outputs.extend(out.detach().cpu().numpy())
             model_targets.extend(data["targets"].detach().cpu().numpy())
             fin_loss += loss.item()

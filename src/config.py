@@ -5,11 +5,13 @@ FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'LeafArea']
 ADD_FEATURES = ['Diameter', 'Height', 'Area', 'Volume']
 
 ## UNCOMMENT IF USING COLAB
-# DATA_DIR = "/content/drive/MyDrive/data/FirstTrainingData"
-# JSON_FILE = "/content/drive/MyDrive/data/FirstTrainingData/GroundTruth.json"
-# TRAIN_METADATA = "/content/drive/MyDrive/data/metadata/TrainGroundTruth.csv"
-# TEST_METADATA = "/content/drive/MyDrive/data/metadata/TestGroundTruth.csv"
-# SCALER_PATH = "/content/drive/MyDrive/data/metadata/"
+# DATA_DIR = "/content/drive/MyDrive/data/GreenHouse/FirstTrainingData"
+# JSON_FILE = "/content/drive/MyDrive/data/GreenHouse/FirstTrainingData/GroundTruth.json"
+# TRAIN_METADATA = "/content/drive/MyDrive/data/GreenHouse/metadata/TrainGroundTruth_seg.csv"
+# TEST_METADATA = "/content/drive/MyDrive/data/GreenHouse/metadata/TestGroundTruth_seg.csv"
+# TRAIN_ADD_FEATURES = "/content/drive/MyDrive/data/GreenHouse/metadata/X_train.csv"
+# TEST_ADD_FEATURES = "/content/drive/MyDrive/data/GreenHouse/metadata/X_eval.csv"
+# SCALER_PATH = "/content/drive/MyDrive/data/GreenHouse/metadata/"
 # SCALERFILE = "scaler.sav"
 # CHECKPOINT_NAME = "running_model_1"
 # CHECKPOINT_PATH = "/content/drive/MyDrive/data/GreenHouse/checkpoint"
@@ -22,8 +24,9 @@ ADD_FEATURES = ['Diameter', 'Height', 'Area', 'Volume']
 # PREDICTION_DATA_DIR = "/content/drive/MyDrive/data/GreenHouse/ImagesFor_June7"
 # SAVE_PREDICTIONS_DIR = "./"
 # TENSORBOARD = "/content/drive/MyDrive/data/GreenHouse/runs"
+SEG_DIR = "/content/drive/MyDrive/data/GreenHouse/segmentation"
 
-## COMMENT IF USING COLAB
+# COMMENT IF USING COLAB
 DATA_DIR = "../data/FirstTrainingData"
 JSON_FILE = "../data/FirstTrainingData/GroundTruth.json"
 TRAIN_METADATA = "../data/metadata/TrainGroundTruth.csv"
