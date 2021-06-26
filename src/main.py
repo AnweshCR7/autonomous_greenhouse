@@ -24,7 +24,7 @@ import re
 # Invert the scaled features to original space
 def invert_scaling(data):
     # The model outputs scaled data.. Need to invert their scaling.
-    scaler = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE}", 'rb'))
+    scaler = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE_Y}", 'rb'))
     return scaler.inverse_transform(data)
 
 
@@ -58,8 +58,8 @@ def convert_to_json(predictions, image_paths):
 # Compute the NMSE
 def compute_criteria(targets, predictions):
 
-    targets = invert_scaling(targets)
-    predictions = invert_scaling(predictions)
+    # targets = invert_scaling(targets)
+    # predictions = invert_scaling(predictions)
 
     targets_df = pd.DataFrame(targets, columns=config.FEATURES)
     predictions_df = pd.DataFrame(predictions, columns=config.FEATURES)
@@ -155,7 +155,7 @@ def run_training():
     # -----------------------------
     # Build Validation Dataloaders
     # -----------------------------
-    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, metadata=test_metadata_csv, center_crop=700, resize=(224,224))
+    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, metadata=test_metadata_csv, center_crop=700, resize=(224,224), add_features=test_add_features_csv)
     test_loader = torch.utils.data.DataLoader(
         dataset=test_set,
         batch_size=config.BATCH_SIZE,

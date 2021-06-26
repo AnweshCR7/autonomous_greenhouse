@@ -32,6 +32,8 @@ class DataLoaderLettuceNet:
         self.resize = resize
         # self.scalerfile = config.SCALERFILE
         self.scaler = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE}", 'rb'))
+        self.scaler_x = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE_X}", 'rb'))
+        self.scaler_y = pickle.load(open(f"{config.SCALER_PATH}{config.SCALERFILE_Y}", 'rb'))
 
         if add_features:
             self.add_features_df = pd.read_csv(add_features)
@@ -115,11 +117,12 @@ class DataLoaderLettuceNet:
         if targets.shape[0] == 0:
             print(f"Image{image_num}")
         targets = targets[config.FEATURES].values
-        # targets = self.scaler.transform(targets).flatten()
+        targets = self.scaler_y.transform(targets).flatten()
 
         # Lets work with add_features
         features = self.add_features_df[self.add_features_df["Unnamed: 0"] == f"Image{image_num}"]
         features = features[config.ADD_FEATURES].values
+        features = self.scaler_x.transform(features).flatten()
 
 
         # for feature in config.FEATURES:

@@ -33,7 +33,8 @@ def sort_json2csv(save_scaling=False):
     measurements = meta_data["Measurements"]
     columns = ['ImageName', 'Variety', 'RGBImage', 'DebthInformation', 'FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafArea']
     data = []
-    scaler = MinMaxScaler()
+    x_scaler = MinMaxScaler()
+    y_scaler = MinMaxScaler()
 
     for key in measurements.keys():
         cur_image_features = measurements[key]
@@ -57,12 +58,19 @@ def sort_json2csv(save_scaling=False):
     train_df.to_csv("./TrainGroundTruth.csv", index=False)
     test_df.to_csv("./TestGroundTruth.csv", index=False)
 
+    train_x = pd.read_csv("../data/features/x_train.csv")
+    train_y = pd.read_csv("../data/features/y_train.csv")
+
     # Fit the scaler on training data and pickle it
     if save_scaling:
-        scalerfile = "scaler.sav"
+        scalerfile = "ft_scaler_x.sav"
         # Only use the numerical values for scaling
-        scaler.fit(train_df[config.FEATURES])
-        pickle.dump(scaler, open(scalerfile, 'wb'))
+        x_scaler.fit(train_x[config.ADD_FEATURES])
+        y_scaler.fit(train_y[config.FEATURES])
+        pickle.dump(x_scaler, open(scalerfile, 'wb'))
+        scalerfile = "ft_scaler_y.sav"
+        pickle.dump(y_scaler, open(scalerfile, 'wb'))
+
 
     # measurements_df.to_csv("./GroundTruth.csv", index=False)
     # measurements_df[config.FEATURES] = scaler.fit_transform(measurements_df[config.FEATURES])
@@ -72,4 +80,4 @@ def sort_json2csv(save_scaling=False):
 
 if __name__ == '__main__':
     # sort_json2csv(save_scaling=True)
-    sort_json2csv()
+    sort_json2csv(save_scaling=True)
