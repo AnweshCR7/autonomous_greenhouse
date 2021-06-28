@@ -83,7 +83,10 @@ class LettuceNet(nn.Module):
         # Fully connected layer to regress the o/p of resnet -> 1 HR per clip
         self.fc_regression = nn.Linear(1000, 10)
         # 10 ft from fc regression and 4 form concatenating the extra features.
-        self.fc_regression2 = nn.Linear(14, len(config.FEATURES))
+        self.fc_regression2 = nn.Linear(14, 20)
+        self.fc_regression3 = nn.Linear(20, 10)
+        self.fc_regression4 = nn.Linear(10, len(config.FEATURES))
+        # self.fc_regression5 = nn.Linear(10, len(config.FEATURES))
         # self.rnn = nn.GRU(input_size=10, hidden_size=10)
         # self.fc = nn.Linear(10, 10)
 
@@ -96,7 +99,9 @@ class LettuceNet(nn.Module):
         x = self.fc_regression(x)
         # Concat the additional features and regress
         x = torch.cat((x, features.squeeze(1)), 1)
-        out = self.fc_regression2(x)
+        x = self.fc_regression2(x)
+        x = self.fc_regression3(x)
+        out = self.fc_regression4(x)
         # fc_regression2
 
         return out
