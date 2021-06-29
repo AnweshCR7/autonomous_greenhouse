@@ -210,6 +210,7 @@ def run_training():
 
         # for feature in error_log_train.keys():
         #     writer.add_scalar(f"Train/{feature}", error_log_train[feature], epoch)
+        #     print(f"Train/{feature}: {error_log_train[feature]}")
 
         NMSE_error = sum([error_log_train[key] for key in error_log_train.keys()])
         print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
@@ -223,6 +224,7 @@ def run_training():
 
         # for feature in error_log_validation.keys():
         #     writer.add_scalar(f"Test/{feature}", error_log_validation[feature], epoch)
+        #     print(f"Test/{feature}{error_log_train[feature]}")
 
         NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
         print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",

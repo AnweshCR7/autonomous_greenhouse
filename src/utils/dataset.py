@@ -121,8 +121,17 @@ class DataLoaderLettuceNet:
 
         # Lets work with add_features
         features = self.add_features_df[self.add_features_df["Unnamed: 0"] == f"Image{image_num}"]
+
+        # features['Shuffle'] = features['Area'] * features['Height'] * features['Volume'] * features[
+        #     'Diameter']
+        # features['Shuffle'] = np.log(features['Shuffle'])
+        # extra_features = features['Shuffle'].values
+
+
         features = features[config.ADD_FEATURES].values
         features = self.scaler_x.transform(features).flatten()
+        # np.append(features, extra_features)
+
 
 
         # for feature in config.FEATURES:
