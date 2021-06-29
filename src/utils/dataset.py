@@ -8,6 +8,7 @@ import pandas as pd
 import pickle
 # from PIL import Image
 # from PIL import ImageFile
+from torchvision import transforms
 
 # ImageFile.LOAD_TRUNCATED_IMAGES = True
 def plot_image(img):
@@ -17,7 +18,7 @@ def plot_image(img):
 
 
 class DataLoaderLettuceNet:
-    def __init__(self, img_paths, metadata, center_crop=None, resize=None, predict=False, add_features=None):
+    def __init__(self, img_paths, metadata, center_crop=None, resize=None, predict=False, add_features=None, augmentations=None):
 
         self.img_paths = img_paths
         # if segmentation_paths is not None:
@@ -41,7 +42,7 @@ class DataLoaderLettuceNet:
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
         # Maybe add more augmentations
-        # transforms = [
+        # transforms = transforms.Compose[
         #     LongestMaxSize(max_size=500),
         #     HorizontalFlip(p=0.5),
         #     PadIfNeeded(500, 600, border_mode=0, value=0),
@@ -50,17 +51,44 @@ class DataLoaderLettuceNet:
         #     Cutout(max_h_size=32, max_w_size=32, p=1)
         # ]
 
+        # List of Augmentations:
+        # Centre crop
+        # resize
+        # addhueandcolorsaturation
+        # linearcontrast
+        # affinesclae
+        # affinerotate
+        # affinesheer
+
+
         # This is more like in-place augmentation
-        self.augmentation_pipeline = A.Compose(
-            [
-                A.CenterCrop(self.center_crop, self.center_crop),
-                # A.HorizontalFlip(p=0.5),
-                A.Resize(resize[1], resize[0])
-                # A.Normalize(
-                #     mean, std, max_pixel_value=255.0, always_apply=True
-                # )
-            ]
-        )
+        if augmentations == "train":
+            self.augmentation_pipeline = A.Compose(
+                [
+                    A.CenterCrop(height= self.center_crop[1], width=self.center_crop[0]),
+                    # A.PadIfNeeded(min_height=1080, min_width=1920, p=1),
+                    A.HorizontalFlip(p=0.5),
+                    A.VerticalFlip(p=0.5),
+                    A.Resize(resize[1], resize[0]),
+                    # A.RandomRotate90(p=1),
+                    # A.RandomScale(0.25),
+                    # A.RandomBrightnessContrast(p=0.8),
+                    # A.IAAAffine(rotate=0.5, p=0.8),
+                    # A.IAAAffine(shear=0.5, p=0.8),
+
+                    # A.Normalize(
+                    #     mean, std, max_pixel_value=255.0, always_apply=True
+                    # )
+                ]
+            )
+        else:
+            if augmentations == "train":
+                self.augmentation_pipeline = A.Compose(
+                    [
+                        A.CenterCrop(height=self.center_crop[1], width=self.center_crop[0]),
+                        A.Resize(resize[1], resize[0]),
+                    ]
+                )
 
     def __len__(self):
         return len(self.img_paths)

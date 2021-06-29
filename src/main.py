@@ -142,7 +142,7 @@ def run_training():
     # Build Train Dataloaders
     # --------------------------------------
 
-    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=train_metadata_csv, center_crop=700, resize=(224, 224), add_features=train_add_features_csv)
+    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=train_metadata_csv, center_crop=(960, 810), resize=(224, 224), add_features=train_add_features_csv, augmentations="train")
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_set,
@@ -155,7 +155,7 @@ def run_training():
     # -----------------------------
     # Build Validation Dataloaders
     # -----------------------------
-    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, metadata=test_metadata_csv, center_crop=700, resize=(224,224), add_features=test_add_features_csv)
+    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, metadata=test_metadata_csv, center_crop=(960, 810), resize=(224,224), add_features=test_add_features_csv, augmentations="validation")
     test_loader = torch.utils.data.DataLoader(
         dataset=test_set,
         batch_size=config.BATCH_SIZE,
@@ -208,9 +208,9 @@ def run_training():
 
         error_log_train = compute_criteria(train_targets, train_predictions)
 
-        # for feature in error_log_train.keys():
-        #     writer.add_scalar(f"Train/{feature}", error_log_train[feature], epoch)
-        #     print(f"Train/{feature}: {error_log_train[feature]}")
+        for feature in error_log_train.keys():
+            writer.add_scalar(f"Train/{feature}", error_log_train[feature], epoch)
+            print(f"Train/{feature}: {error_log_train[feature]}")
 
         NMSE_error = sum([error_log_train[key] for key in error_log_train.keys()])
         print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
@@ -222,9 +222,9 @@ def run_training():
 
         error_log_validation = compute_criteria(eval_targets, eval_predictions)
 
-        # for feature in error_log_validation.keys():
-        #     writer.add_scalar(f"Test/{feature}", error_log_validation[feature], epoch)
-        #     print(f"Test/{feature}{error_log_train[feature]}")
+        for feature in error_log_validation.keys():
+            writer.add_scalar(f"Test/{feature}", error_log_validation[feature], epoch)
+            print(f"Test/{feature}{error_log_validation[feature]}")
 
         NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
         print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
