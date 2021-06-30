@@ -13,6 +13,7 @@ import config
 from utils.model_utils import plot_loss, load_model_if_checkpointed, save_model_checkpoint
 from models.simpleCNN import SimpleCNN
 from models.lettuceNet import LettuceNet
+from models.LettuceNetPlus import LettuceNetPlus
 from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import DataLoaderLettuceNet
 import json
@@ -73,7 +74,7 @@ def compute_criteria(targets, predictions):
 
 
 def run_training():
-    model = LettuceNet()
+    model = LettuceNetPlus()
 
     # Fix random seed for reproducibility
     np.random.seed(config.RANDOM_SEED)

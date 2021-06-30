@@ -82,13 +82,12 @@ class DataLoaderLettuceNet:
                 ]
             )
         else:
-            if augmentations == "train":
-                self.augmentation_pipeline = A.Compose(
-                    [
-                        A.CenterCrop(height=self.center_crop[1], width=self.center_crop[0]),
-                        A.Resize(resize[1], resize[0]),
-                    ]
-                )
+            self.augmentation_pipeline = A.Compose(
+                [
+                    A.CenterCrop(height=self.center_crop[1], width=self.center_crop[0]),
+                    A.Resize(resize[1], resize[0]),
+                ]
+            )
 
     def __len__(self):
         return len(self.img_paths)
