@@ -8,6 +8,7 @@ import config
 
 ssl._create_default_https_context = ssl._create_stdlib_context
 
+
 def plot_image(img):
     plt.axis("off")
     plt.imshow(img, origin='upper')
@@ -72,13 +73,13 @@ class LettuceNetPlus(nn.Module):
 
         # resnet o/p -> bs x 1000
         # self.resnet18 = resnet18(pretrained=False)
-        # resnet = models.resnet18(pretrained=True)
-        # modules = list(resnet.children())[:-1]
+        resnet = models.resnet50(pretrained=True)
+        modules = list(resnet.children())[:-1]
 
-        # self.resnet18 = nn.Sequential(*modules)
-        # # self.resnet18[0] = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        # # The resnet average pool layer before fc
-        # # self.avgpool = nn.AvgPool2d((10, 1))
+        self.resnet18 = nn.Sequential(*modules)
+        # self.resnet18[0] = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        # The resnet average pool layer before fc
+        # self.avgpool = nn.AvgPool2d((10, 1))
         # self.resnet_linear = nn.Linear(512, 1000)
         # # Fully connected layer to regress the o/p of resnet -> 1 HR per clip
         # self.fc_regression = nn.Linear(1000, 10)
@@ -87,22 +88,32 @@ class LettuceNetPlus(nn.Module):
         # self.fc_regression3 = nn.Linear(20, 10)
         # self.fc_regression4 = nn.Linear(10, len(config.FEATURES))
 
+        self.linear = nn.Linear(4, 512)
+        self.linear1 = nn.Linear(512, 512)
+        self.activation = nn.LeakyReLU()
+        self.linear2 = nn.Linear(512, len(config.FEATURES))
+        self.linear_concat = nn.Linear(1024, 512)
+        # self.linear_concat = nn.Linear(2056, 512)
 
-        self.linear = nn.Linear(5, 64)
-        self.linear1 = nn.Linear(64, 64)
-        self.activation = nn.ReLU()
-        self.linear2 = nn.Linear(64, len(config.FEATURES))
-        # self.fc_regression5 = nn.Linear(10, len(config.FEATURES))
-        # self.rnn = nn.GRU(input_size=10, hidden_size=10)
-        # self.fc = nn.Linear(10, 10)
+        self.fc_regression5 = nn.Linear(512, len(config.FEATURES))
 
     def forward(self, images, targets, features):
         # Need to have so as to reflect a batch_size = 1 // if batched then comment out
         x = self.linear(features)
         x = self.activation(x)
         x = self.linear1(x)
-        x = self.activation(x)
-        out = self.linear2(x)
+        mid = self.activation(x)
+        # x = self.linear1(x)
+        # x = self.activation(x)
+        # mid = self.linear2(x)
+
+        img_feat = self.resnet18(images)
+        # the mentioned dim is the output dim of the CNN. eg: 512, 2048
+        img_feat = img_feat.view((-1, 512))
+        out = torch.cat((mid, img_feat), 1)
+        out = self.linear_concat(out)
+        out = self.activation(out)
+        out = self.fc_regression5(out)
         # x = self.resnet18(images)
         # x = x.view(x.size(0), -1)
         # # output dim: BSx1
