@@ -54,12 +54,14 @@ def eval_fn(model, data_loader, loss_fn):
 def predict_fn(model, data_loader):
     model.eval()
     model_outputs = []
-    # model_targets = []
+    model_targets = []
     with torch.no_grad():
         tk_iterator = tqdm(data_loader, total=len(data_loader))
         for data in tk_iterator:
-            out = model(data, torch.empty(1, 1))
+            out = model(data["images"], torch.empty(1, 1), data["features"])
             # loss = loss_fn(out, data["targets"])
             model_outputs.extend(out.detach().cpu().numpy())
+            model_targets.extend(data["targets"].detach().cpu().numpy())
 
-    return np.array(model_outputs)
+
+    return np.array(model_outputs), np.array(model_targets)

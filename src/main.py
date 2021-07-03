@@ -98,7 +98,7 @@ def run_training():
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, factor=0.8, patience=5, verbose=True
     )
-    loss_fn = nn.L1Loss()
+    loss_fn = nn.MSELoss()
 
     # TensorBoard
     writer = SummaryWriter(config.TENSORBOARD)
@@ -271,16 +271,25 @@ def generate_prediction():
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, factor=0.8, patience=5, verbose=True
     )
+    prediction_img_paths = []
+    test_metadata_csv = config.TEST_METADATA
+    test_add_features_csv = config.TEST_ADD_FEATURES
+    test_df = pd.read_csv(test_metadata_csv)
+    for image_name in test_df["ImageName"].values:
+        image_index = int(re.findall("\d+", image_name)[0])
+        prediction_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
 
 
-    prediction_img_paths = glob.glob(f"{config.PREDICTION_DATA_DIR}/RGB_*")
+    # prediction_img_paths = glob.glob(f"{config.PREDICTION_DATA_DIR}/RGB_*")
 
     # --------------------------------------
     # Build Train Dataloaders
     # --------------------------------------
 
-    prediction_set = DataLoaderLettuceNet(img_paths=prediction_img_paths, metadata=None, center_crop=700,
-                                     resize=(224, 224), predict=True)
+    # train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=train_metadata_csv, center_crop=(960, 810), resize=(224, 224), add_features=train_add_features_csv, augmentations="train")
+
+    prediction_set = DataLoaderLettuceNet(img_paths=prediction_img_paths, metadata=test_metadata_csv, center_crop=(960, 810), resize=(224, 224), predict=True,
+                                     add_features=test_add_features_csv, augmentations="val")
 
     prediction_loader = torch.utils.data.DataLoader(
         dataset=prediction_set,
@@ -304,6 +313,7 @@ def generate_prediction():
         load_on_cpu = True
     else:
         load_on_cpu = False
+
     model, optimizer, checkpointed_loss, checkpoint_flag = load_model_if_checkpointed(model, optimizer, checkpoint_path,
                                                                                       load_on_cpu=load_on_cpu)
     if checkpoint_flag:
@@ -311,13 +321,20 @@ def generate_prediction():
     else:
         print("Checkpoint Not Found!")
 
-    predictions = engine.predict_fn(model, prediction_loader)
+    predictions, targets = engine.predict_fn(model, prediction_loader)
+    error_log_validation = compute_criteria(targets, predictions)
 
     # Convert predictions to JSON
-    convert_to_json(predictions, prediction_img_paths)
+    # convert_to_json(predictions, prediction_img_paths)
+    for feature in error_log_validation.keys():
+        print(f"Test/{feature}: {error_log_validation[feature]}")
+
+    NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
+    print(f"\nFinished [Test Epoch]",
+          "Test_NMSE : {:.3f} |".format(NMSE_error), )
     print("done")
 
 
 if __name__ == '__main__':
-    run_training()
-    # generate_prediction()
+    # run_training()
+    generate_prediction()

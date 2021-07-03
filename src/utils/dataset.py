@@ -25,10 +25,10 @@ class DataLoaderLettuceNet:
         #     self.segmentation_paths = segmentation_paths
         # self.targets_list = metadata
         self.predict = predict
-        if not self.predict:
-            self.targets_df = pd.read_csv(metadata)
-        else:
-            self.targets_df = None
+        # if not self.predict:
+        self.targets_df = pd.read_csv(metadata)
+        # else:
+        #     self.targets_df = None
         self.center_crop = center_crop
         self.resize = resize
         # self.scalerfile = config.SCALERFILE
@@ -132,19 +132,13 @@ class DataLoaderLettuceNet:
         # Convert to form: CxHxW
         image = np.transpose(image, (2,0,1)).astype(np.float32)
 
-        if self.predict:
-            return torch.tensor(image, dtype=torch.float)
+        # if self.predict:
+        #     return torch.tensor(image, dtype=torch.float)
 
         '''
         This will take care of all augmentations that stem from the original image name as long as we prefix names in the augmented counterparts.
         Reason: the image number is the same for all augmentations.
         '''
-        # WHEN USING .csv FILE
-        targets = self.targets_df[self.targets_df["ImageName"] == f"Image{image_num}"]
-        if targets.shape[0] == 0:
-            print(f"Image{image_num}")
-        targets = targets[config.FEATURES].values
-        targets = self.scaler_y.transform(targets).flatten()
 
         # Lets work with add_features
         features = self.add_features_df[self.add_features_df["Unnamed: 0"] == f"Image{image_num}"]
@@ -154,9 +148,23 @@ class DataLoaderLettuceNet:
         # features['Shuffle'] = np.log(features['Shuffle'])
         # extra_features = features['Shuffle'].values
 
-
         features = features[config.ADD_FEATURES].values
         features = self.scaler_x.transform(features).flatten()
+
+        # implies prediction mode:
+        # if self.predict:
+        #     return {
+        #         "images": torch.tensor(image, dtype=torch.float),
+        #         # "targets": torch.tensor(targets, dtype=torch.float),
+        #         "features": torch.tensor(features, dtype=torch.float)
+        #     }
+        # else:
+        # WHEN USING .csv FILE
+        targets = self.targets_df[self.targets_df["ImageName"] == f"Image{image_num}"]
+        if targets.shape[0] == 0:
+            print(f"Image{image_num}")
+        targets = targets[config.FEATURES].values
+        targets = self.scaler_y.transform(targets).flatten()
         # np.append(features, extra_features)
 
 
