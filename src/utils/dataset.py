@@ -160,7 +160,7 @@ class DataLoaderLettuceNet:
         #     }
         # else:
         # WHEN USING .csv FILE
-        targets = self.targets_df[self.targets_df["ImageName"] == f"Image{image_num}"]
+        targets = self.targets_df[self.targets_df["Unnamed: 0"] == f"Image{image_num}"]
         if targets.shape[0] == 0:
             print(f"Image{image_num}")
         targets = targets[config.FEATURES].values

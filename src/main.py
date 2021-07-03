@@ -57,13 +57,19 @@ def convert_to_json(predictions, image_paths):
 
 
 # Compute the NMSE
-def compute_criteria(targets, predictions):
+def compute_criteria(targets, predictions, save=False, img_meta=None):
 
-    # targets = invert_scaling(targets)
-    # predictions = invert_scaling(predictions)
+    targets = invert_scaling(targets)
+    predictions = invert_scaling(predictions)
 
     targets_df = pd.DataFrame(targets, columns=config.FEATURES)
     predictions_df = pd.DataFrame(predictions, columns=config.FEATURES)
+
+    if save:
+        targets_df["ImageName"] = pd.DataFrame(img_meta)
+        targets_df.to_csv(f"{config.SAVE_PREDICTIONS_DIR}/targets_df.csv", index=False)
+        predictions_df["ImageName"] = pd.DataFrame(img_meta)
+        predictions_df.to_csv(f"{config.SAVE_PREDICTIONS_DIR}/preds_df.csv", index=False)
 
     error_log = {}
     for column in targets_df.columns:
@@ -107,8 +113,8 @@ def run_training():
     meta_data = json.load(f)
     measurements = meta_data["Measurements"]
 
-    train_metadata_csv = config.TRAIN_METADATA
-    test_metadata_csv = config.TEST_METADATA
+    train_metadata_csv = config.TRAIN_ADD_FEATURES_Y
+    test_metadata_csv = config.TEST_ADD_FEATURES_Y
     train_add_features_csv = config.TRAIN_ADD_FEATURES
     test_add_features_csv = config.TEST_ADD_FEATURES
 
@@ -116,26 +122,39 @@ def run_training():
     train_img_paths = []
     test_img_paths = []
     # Ad hoc at this point
-    train_df = pd.read_csv(train_metadata_csv)
-    test_df = pd.read_csv(test_metadata_csv)
-    # train_df = pd.concat([train_df, test_df])
-    train_df.to_csv("./FullGroundTruth.csv", index=False)
-    # train_indices = [int(s) for s in image_name.split() if s.isdigit() for image_name in train_df["ImageName"].values]
-    for image_name in train_df["ImageName"].values:
+    # train_df = pd.read_csv(train_metadata_csv)
+    # test_df = pd.read_csv(test_metadata_csv)
+    train_df = pd.read_csv(train_add_features_csv)
+    test_df = pd.read_csv(test_add_features_csv)
+
+    # New code with Harry's GT
+    for image_name in train_df["Unnamed: 0"].values:
         image_index = int(re.findall("\d+", image_name)[0])
         train_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
-        # train_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
-        # train_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
-        # train_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
 
     # train_img_paths = train_img_paths[:16]
 
-    for image_name in test_df["ImageName"].values:
+    for image_name in test_df["Unnamed: 0"].values:
         image_index = int(re.findall("\d+", image_name)[0])
         test_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
-        # test_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
-        # test_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
-        # test_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
+
+
+    # Old code with full GT
+    # for image_name in train_df["ImageName"].values:
+    #     image_index = int(re.findall("\d+", image_name)[0])
+    #     train_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+    #     # train_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
+    #     # train_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
+    #     # train_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
+    #
+    # # train_img_paths = train_img_paths[:16]
+    #
+    # for image_name in test_df["ImageName"].values:
+    #     image_index = int(re.findall("\d+", image_name)[0])
+    #     test_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+    #     # test_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
+    #     # test_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
+    #     # test_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
 
     # segmentation_paths = glob.glob(f"{config.SEG_DIR}/*.png")
 
@@ -247,7 +266,7 @@ def run_training():
 
 
 def generate_prediction():
-    model = LettuceNet()
+    model = LettuceNetPlus()
 
     # Fix random seed for reproducibility
     np.random.seed(config.RANDOM_SEED)
@@ -272,10 +291,16 @@ def generate_prediction():
         optimizer, factor=0.8, patience=5, verbose=True
     )
     prediction_img_paths = []
-    test_metadata_csv = config.TEST_METADATA
+
+    # The Y
+    test_metadata_csv = config.TEST_ADD_FEATURES_Y
+    test_y = pd.read_csv(config.TEST_ADD_FEATURES_Y)
+    # The X in addition to the Image
     test_add_features_csv = config.TEST_ADD_FEATURES
-    test_df = pd.read_csv(test_metadata_csv)
-    for image_name in test_df["ImageName"].values:
+    test_df = pd.read_csv(test_add_features_csv)
+
+
+    for image_name in test_df["Unnamed: 0"].values:
         image_index = int(re.findall("\d+", image_name)[0])
         prediction_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
 
@@ -322,7 +347,7 @@ def generate_prediction():
         print("Checkpoint Not Found!")
 
     predictions, targets = engine.predict_fn(model, prediction_loader)
-    error_log_validation = compute_criteria(targets, predictions)
+    error_log_validation = compute_criteria(targets, predictions, save=True, img_meta=test_y["Unnamed: 0"].values)
 
     # Convert predictions to JSON
     # convert_to_json(predictions, prediction_img_paths)
@@ -336,5 +361,5 @@ def generate_prediction():
 
 
 if __name__ == '__main__':
-    # run_training()
-    generate_prediction()
+    run_training()
+    # generate_prediction()

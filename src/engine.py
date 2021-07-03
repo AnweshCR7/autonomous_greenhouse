@@ -58,6 +58,8 @@ def predict_fn(model, data_loader):
     with torch.no_grad():
         tk_iterator = tqdm(data_loader, total=len(data_loader))
         for data in tk_iterator:
+            for (key, value) in data.items():
+                data[key] = value.to(config.DEVICE)
             out = model(data["images"], torch.empty(1, 1), data["features"])
             # loss = loss_fn(out, data["targets"])
             model_outputs.extend(out.detach().cpu().numpy())
