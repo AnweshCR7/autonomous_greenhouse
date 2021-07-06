@@ -30,7 +30,7 @@ def invert_scaling(data):
 
 
 # Convert the predictions to JSON
-def convert_to_json(predictions, image_paths):
+def convert_to_json(predictions, image_paths, test_df):
     predictions = invert_scaling(predictions)
 
     data = {}
@@ -40,13 +40,16 @@ def convert_to_json(predictions, image_paths):
         image_predictions = predictions[idx, :]
         image_name = image_path.split('/')[-1]
         image_num = image_name.split('.')[0].split('_')[-1]
+        rem_features = test_df[test_df['Unnamed: 0'] == f"Image{image_num}"]
+
         prediction_object = {
             "RGBImage": image_name,
             "DebthInformation": f"Debth_{image_num}.png",
             "FreshWeightShoot": image_predictions[0].astype('float'),
             "DryWeightShoot": image_predictions[1].astype('float'),
-            "Height": image_predictions[2].astype('float'),
-            "Diameter": image_predictions[3].astype('float'),
+            # from test_df
+            "Height": rem_features["Height"].astype('float'),
+            "Diameter": rem_features["Diameter"].astype('float'),
             "LeafArea": image_predictions[4].astype('float')
         }
         data["Measurements"][f"Image{idx+1}"] = prediction_object
@@ -65,16 +68,16 @@ def compute_criteria(targets, predictions, save=False, img_meta=None):
     targets_df = pd.DataFrame(targets, columns=config.FEATURES)
     predictions_df = pd.DataFrame(predictions, columns=config.FEATURES)
 
+    error_log = {}
+    for column in targets_df.columns:
+        # y => ground truths and y_hat => predictions
+        error_log[column] = sum([(y - y_hat)**2 for y, y_hat in zip(targets_df[column].values, predictions_df[column].values)])/sum([y**2 for y in targets_df[column].values])
+
     if save:
         targets_df["ImageName"] = pd.DataFrame(img_meta)
         targets_df.to_csv(f"{config.SAVE_PREDICTIONS_DIR}/targets_df.csv", index=False)
         predictions_df["ImageName"] = pd.DataFrame(img_meta)
         predictions_df.to_csv(f"{config.SAVE_PREDICTIONS_DIR}/preds_df.csv", index=False)
-
-    error_log = {}
-    for column in targets_df.columns:
-        # y => ground truths and y_hat => predictions
-        error_log[column] = sum([(y - y_hat)**2 for y, y_hat in zip(targets_df[column].values, predictions_df[column].values)])/sum([y**2 for y in targets_df[column].values])
 
     return error_log
 
@@ -137,6 +140,8 @@ def run_training():
     for image_name in test_df["Unnamed: 0"].values:
         image_index = int(re.findall("\d+", image_name)[0])
         test_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+    # test_img_paths = ["../data/FirstTrainingData/RGB_309.png"]
+
 
 
     # Old code with full GT
@@ -350,7 +355,7 @@ def generate_prediction():
     error_log_validation = compute_criteria(targets, predictions, save=True, img_meta=test_y["Unnamed: 0"].values)
 
     # Convert predictions to JSON
-    # convert_to_json(predictions, prediction_img_paths)
+    convert_to_json(predictions, prediction_img_paths, test_df)
     for feature in error_log_validation.keys():
         print(f"Test/{feature}: {error_log_validation[feature]}")
 
@@ -361,5 +366,5 @@ def generate_prediction():
 
 
 if __name__ == '__main__':
-    run_training()
-    # generate_prediction()
+    # run_training()
+    generate_prediction()
