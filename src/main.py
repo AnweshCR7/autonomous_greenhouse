@@ -262,7 +262,7 @@ def run_training():
 
         # print(f"Epoch {epoch+1} => Training Loss: {train_loss}, Val Loss: {eval_loss}")
         # print(f"Epoch {epoch} => Training Loss: {train_loss}")
-        train_loss_per_epoch.append(train_loss)
+        # train_loss_per_epoch.append(train_loss)
         validation_loss_data.append(eval_loss)
 
     # print(train_dataset[0])
@@ -299,7 +299,7 @@ def generate_prediction():
 
     # The Y
     test_metadata_csv = config.TEST_ADD_FEATURES_Y
-    test_y = pd.read_csv(config.TEST_ADD_FEATURES_Y)
+    # test_y = pd.read_csv(config.TEST_ADD_FEATURES_Y)
     # The X in addition to the Image
     test_add_features_csv = config.TEST_ADD_FEATURES
     test_df = pd.read_csv(test_add_features_csv)
@@ -351,17 +351,17 @@ def generate_prediction():
     else:
         print("Checkpoint Not Found!")
 
-    predictions, targets = engine.predict_fn(model, prediction_loader)
-    error_log_validation = compute_criteria(targets, predictions, save=True, img_meta=test_y["Unnamed: 0"].values)
+    predictions = engine.predict_fn(model, prediction_loader)
+    # error_log_validation = compute_criteria(targets, predictions, save=True, img_meta=test_y["Unnamed: 0"].values)
 
     # Convert predictions to JSON
     convert_to_json(predictions, prediction_img_paths, test_df)
-    for feature in error_log_validation.keys():
-        print(f"Test/{feature}: {error_log_validation[feature]}")
+    # for feature in error_log_validation.keys():
+    #     print(f"Test/{feature}: {error_log_validation[feature]}")
 
-    NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
-    print(f"\nFinished [Test Epoch]",
-          "Test_NMSE : {:.3f} |".format(NMSE_error), )
+    # NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
+    # print(f"\nFinished [Test Epoch]",
+    #       "Test_NMSE : {:.3f} |".format(NMSE_error), )
     print("done")
 
 

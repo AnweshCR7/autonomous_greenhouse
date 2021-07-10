@@ -63,7 +63,7 @@ def predict_fn(model, data_loader):
             out = model(data["images"], torch.empty(1, 1), data["features"])
             # loss = loss_fn(out, data["targets"])
             model_outputs.extend(out.detach().cpu().numpy())
-            model_targets.extend(data["targets"].detach().cpu().numpy())
+            # model_targets.extend(data["targets"].detach().cpu().numpy())
 
 
-    return np.array(model_outputs), np.array(model_targets)
+    return np.array(model_outputs)

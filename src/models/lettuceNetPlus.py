@@ -75,6 +75,10 @@ class LettuceNetPlus(nn.Module):
         # self.resnet18 = resnet18(pretrained=False)
         resnet = models.resnet18(pretrained=True)
         modules = list(resnet.children())[:-1]
+        #
+        # # inception = models.inception_v3(pretrained=True)
+        # # modules = list(inception.children())[:-1]
+        # self.inception = nn.Sequential(*modules)
 
         self.resnet18 = nn.Sequential(*modules)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
@@ -96,6 +100,14 @@ class LettuceNetPlus(nn.Module):
         self.linear_concat = nn.Linear(1024, 512)
         # self.linear_concat = nn.Linear(2056, 512)
 
+        # self.linear = nn.Linear(4, 16)
+        # self.linear1 = nn.Linear(16, 16)
+        # self.activation = nn.LeakyReLU()
+        # self.linear2 = nn.Linear(16, len(config.FEATURES))
+        # self.linear_concat = nn.Linear(20, 16)
+        # self.resnet_linear = nn.Linear(512, 16)
+        # # self.linear_concat = nn.Linear(2056, 512)
+
         self.fc_regression5 = nn.Linear(512, len(config.FEATURES))
 
     def forward(self, images, targets, features):
@@ -106,9 +118,10 @@ class LettuceNetPlus(nn.Module):
         mid = self.activation(x)
         # x = self.linear1(x)
         # x = self.activation(x)
-        # mid = self.linear2(x)
-
+        # out = self.linear2(x)
+        #
         img_feat = self.resnet18(images)
+        # img_feat = self.inception(images)
         # Add avg Pooling layer
         img_feat = self.avgpool(img_feat)
         # the mentioned dim is the output dim of the CNN. eg: 512, 2048
@@ -118,17 +131,19 @@ class LettuceNetPlus(nn.Module):
         out = self.activation(out)
         out = self.fc_regression5(out)
 
-        # x = self.resnet18(images)
-        # x = x.view(x.size(0), -1)
-        # # output dim: BSx1
-        # x = self.resnet_linear(x)
-        # x = self.fc_regression(x)
-        # # Concat the additional features and regress
-        # x = torch.cat((x, features.squeeze(1)), 1)
-        # x = self.fc_regression2(x)
-        # x = self.fc_regression3(x)
-        # out = self.fc_regression4(x)
-        # fc_regression2
+        # img_feat = self.resnet18(images)
+        # # Add avg Pooling layer
+        # img_feat = self.avgpool(img_feat)
+        # img_feat = img_feat.view((-1, 512))
+        # img_feat = self.resnet_linear(img_feat)
+        # # the mentioned dim is the output dim of the CNN. eg: 512, 2048
+        # # img_feat = img_feat.view((-1, 16))
+        # out = torch.cat((features, img_feat), 1)
+        # out = self.linear_concat(out)
+        # out = self.activation(out)
+        # out = self.linear1(out)
+        # out = self.activation(out)
+        # out = self.final_out(out)
 
         return out
 

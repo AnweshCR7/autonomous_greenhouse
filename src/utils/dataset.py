@@ -98,6 +98,8 @@ class DataLoaderLettuceNet:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         # Get the image number
         image_num = self.img_paths[index].split('/')[-1].split('.')[0].split('_')[-1]
+        # if image.shape[0] == 0:
+        # print(image_num)
         seg_mask = cv2.imread(f"{config.SEG_DIR}/Seg_{image_num}.png")
         seg_mask = seg_mask[:, :, 0]
         # Find class
@@ -152,34 +154,34 @@ class DataLoaderLettuceNet:
         features = self.scaler_x.transform(features).flatten()
 
         # implies prediction mode:
-        # if self.predict:
-        #     return {
-        #         "images": torch.tensor(image, dtype=torch.float),
-        #         # "targets": torch.tensor(targets, dtype=torch.float),
-        #         "features": torch.tensor(features, dtype=torch.float)
-        #     }
-        # else:
-        # WHEN USING .csv FILE
-        targets = self.targets_df[self.targets_df["Unnamed: 0"] == f"Image{image_num}"]
-        if targets.shape[0] == 0:
-            print(f"Image{image_num}")
-        targets = targets[config.FEATURES].values
-        targets = self.scaler_y.transform(targets).flatten()
-        # np.append(features, extra_features)
+        if self.predict:
+            return {
+                "images": torch.tensor(image, dtype=torch.float),
+                # "targets": torch.tensor(targets, dtype=torch.float),
+                "features": torch.tensor(features, dtype=torch.float)
+            }
+        else:
+            # WHEN USING .csv FILE
+            targets = self.targets_df[self.targets_df["Unnamed: 0"] == f"Image{image_num}"]
+            if targets.shape[0] == 0:
+                print(f"Image{image_num}")
+            targets = targets[config.FEATURES].values
+            targets = self.scaler_y.transform(targets).flatten()
+            # np.append(features, extra_features)
 
 
 
-        # for feature in config.FEATURES:
-        #     targets.append(target_dict[feature])
+            # for feature in config.FEATURES:
+            #     targets.append(target_dict[feature])
 
-        # WHEN USING .json FILE
-        # target_dict = self.targets_list[f"Image{image_num}"]
-        # targets = []
-        # for feature in config.FEATURES:
-        #     targets.append(target_dict[feature])
+            # WHEN USING .json FILE
+            # target_dict = self.targets_list[f"Image{image_num}"]
+            # targets = []
+            # for feature in config.FEATURES:
+            #     targets.append(target_dict[feature])
 
-        return {
-            "images": torch.tensor(image, dtype=torch.float),
-            "targets": torch.tensor(targets, dtype=torch.float),
-            "features": torch.tensor(features, dtype=torch.float)
-        }
+            return {
+                "images": torch.tensor(image, dtype=torch.float),
+                "targets": torch.tensor(targets, dtype=torch.float),
+                "features": torch.tensor(features, dtype=torch.float)
+            }
