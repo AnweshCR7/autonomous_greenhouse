@@ -102,6 +102,13 @@ class DataLoaderLettuceNet:
         image_num = self.img_paths[index].split('/')[-1].split('.')[0].split('_')[-1]
         # if image.shape[0] == 0:
         # print(f"{config.SEG_DIR}/Seg_{image_num}.pred.png")
+        # if self.predict:
+        #   seg_dir = config.PRED_SEG_DIR
+        #   seg_mask = cv2.imread(f"{seg_dir}/Seg_{image_num}.pred.png")
+        # else:
+        #   seg_dir = config.SEG_DIR
+        #   seg_mask = cv2.imread(f"{seg_dir}/Seg_{image_num}.png")
+
         seg_mask = cv2.imread(f"{config.SEG_DIR}/Seg_{image_num}.pred.png")
         seg_mask = seg_mask[:, :, 0]
         # Find class
@@ -145,6 +152,7 @@ class DataLoaderLettuceNet:
         '''
 
         # Lets work with add_features
+        # Fix dependence on column name text
         features = self.add_features_df[self.add_features_df["Unnamed: 0"] == f"Image{image_num}"]
 
         # features['Shuffle'] = features['Area'] * features['Height'] * features['Volume'] * features[
@@ -164,7 +172,7 @@ class DataLoaderLettuceNet:
             }
         else:
             # WHEN USING .csv FILE
-            targets = self.targets_df[self.targets_df["Unnamed: 0"] == f"Image{image_num}"]
+            targets = self.targets_df[self.targets_df["ImageName"] == f"Image{image_num}"]
             if targets.shape[0] == 0:
                 print(f"Image{image_num}")
             targets = targets[config.FEATURES].values

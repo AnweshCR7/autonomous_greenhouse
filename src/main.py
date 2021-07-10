@@ -112,34 +112,39 @@ def run_training():
     # TensorBoard
     writer = SummaryWriter(config.TENSORBOARD)
 
-    f = open(config.JSON_FILE)
-    meta_data = json.load(f)
-    measurements = meta_data["Measurements"]
+    # f = open(config.JSON_FILE)
+    # meta_data = json.load(f)
+    # measurements = meta_data["Measurements"]
 
-    train_metadata_csv = config.TRAIN_ADD_FEATURES_Y
-    test_metadata_csv = config.TEST_ADD_FEATURES_Y
-    train_add_features_csv = config.TRAIN_ADD_FEATURES
+    master_metadata_csv = config.MASTER_METADATA
+    master_metadata_add_features = config.MASTER_METADATA_ADD_FT
+
+    # This csv is just there to read Harry's eval_set and eventually filter the training data from the master dataset.
     test_add_features_csv = config.TEST_ADD_FEATURES
 
-    # img_paths = glob.glob(f"{config.DATA_DIR}/RGB_*")
-    train_img_paths = []
     test_img_paths = []
-    # Ad hoc at this point
-    # train_df = pd.read_csv(train_metadata_csv)
-    # test_df = pd.read_csv(test_metadata_csv)
-    train_df = pd.read_csv(train_add_features_csv)
+    all_img_paths = []
+    test_img_numbers = []
+
     test_df = pd.read_csv(test_add_features_csv)
 
-    # New code with Harry's GT
-    for image_name in train_df["Unnamed: 0"].values:
-        image_index = int(re.findall("\d+", image_name)[0])
-        train_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+    master_df = pd.read_csv(master_metadata_csv)
 
-    # train_img_paths = train_img_paths[:16]
-
+    # Get the names of all the test images.
+    # But we will only take the image names from this dataframe.
+    # The features will be taken from the master dataset.
     for image_name in test_df["Unnamed: 0"].values:
         image_index = int(re.findall("\d+", image_name)[0])
         test_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+        test_img_numbers.append(image_index)
+
+    # New code with Harry's GT
+    for image_name in master_df["ImageName"].values:
+        image_index = int(re.findall("\d+", image_name)[0])
+        all_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+
+    # Now filter the training set from the master set
+    train_img_paths = [path for path in all_img_paths if int(re.findall("\d+", path)[0]) not in test_img_numbers]
     # test_img_paths = ["../data/FirstTrainingData/RGB_309.png"]
 
 
@@ -167,7 +172,7 @@ def run_training():
     # Build Train Dataloaders
     # --------------------------------------
 
-    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=train_metadata_csv, center_crop=(960, 810), resize=(224, 224), add_features=train_add_features_csv, augmentations="train")
+    train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=master_metadata_csv, center_crop=(960, 810), resize=(224, 224), add_features=master_metadata_add_features, augmentations="train")
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_set,
@@ -180,7 +185,7 @@ def run_training():
     # -----------------------------
     # Build Validation Dataloaders
     # -----------------------------
-    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, metadata=test_metadata_csv, center_crop=(960, 810), resize=(224,224), add_features=test_add_features_csv, augmentations="validation")
+    test_set = DataLoaderLettuceNet(img_paths=test_img_paths, metadata=master_metadata_csv, center_crop=(960, 810), resize=(224,224), add_features=master_metadata_add_features, augmentations="validation")
     test_loader = torch.utils.data.DataLoader(
         dataset=test_set,
         batch_size=config.BATCH_SIZE,
@@ -215,46 +220,47 @@ def run_training():
     validation_loss_data = []
     for epoch in range(config.EPOCHS):
         # training
-        train_targets, train_predictions, train_loss = engine.train_fn(model, train_loader, optimizer, loss_fn)
+        if not config.ONLY_EVAL:
+            train_targets, train_predictions, train_loss = engine.train_fn(model, train_loader, optimizer, loss_fn)
 
-        # Save model with final train loss (script to save the best weights?)
-        if checkpointed_loss != 0.0:
-            if train_loss < checkpointed_loss:
-                save_model_checkpoint(model, optimizer, train_loss, checkpoint_path)
-                checkpointed_loss = train_loss
-            else:
-                pass
-        else:
-            if len(train_loss_per_epoch) > 0:
-                if train_loss < min(train_loss_per_epoch):
+            # Save model with final train loss (script to save the best weights?)
+            if checkpointed_loss != 0.0:
+                if train_loss < checkpointed_loss:
                     save_model_checkpoint(model, optimizer, train_loss, checkpoint_path)
+                    checkpointed_loss = train_loss
+                else:
+                    pass
             else:
-                save_model_checkpoint(model, optimizer, train_loss, checkpoint_path)
+                if len(train_loss_per_epoch) > 0:
+                    if train_loss < min(train_loss_per_epoch):
+                        save_model_checkpoint(model, optimizer, train_loss, checkpoint_path)
+                else:
+                    save_model_checkpoint(model, optimizer, train_loss, checkpoint_path)
 
-        error_log_train = compute_criteria(train_targets, train_predictions)
+            error_log_train = compute_criteria(train_targets, train_predictions)
 
-        for feature in error_log_train.keys():
-            writer.add_scalar(f"Train/{feature}", error_log_train[feature], epoch)
-            print(f"Train/{feature}: {error_log_train[feature]}")
+            for feature in error_log_train.keys():
+                writer.add_scalar(f"Train/{feature}", error_log_train[feature], epoch)
+                print(f"Train/{feature}: {error_log_train[feature]}")
 
-        NMSE_error = sum([error_log_train[key] for key in error_log_train.keys()])
-        print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
-              "\nTraining Loss: {:.3f} |".format(train_loss),
-              "Train_NMSE : {:.5f} |".format(NMSE_error),)
+            NMSE_error = sum([error_log_train[key] for key in error_log_train.keys()])
+            print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
+                  "\nTraining Loss: {:.3f} |".format(train_loss),
+                  "Train_NMSE : {:.5f} |".format(NMSE_error),)
+        else:
+            # validation
+            eval_targets, eval_predictions, eval_loss = engine.eval_fn(model, test_loader, loss_fn)
 
-        # validation
-        eval_targets, eval_predictions, eval_loss = engine.eval_fn(model, test_loader, loss_fn)
+            error_log_validation = compute_criteria(eval_targets, eval_predictions, save=True, img_meta=test_df["Unnamed: 0"].values)
 
-        error_log_validation = compute_criteria(eval_targets, eval_predictions)
+            for feature in error_log_validation.keys():
+                writer.add_scalar(f"Test/{feature}", error_log_validation[feature], epoch)
+                print(f"Test/{feature}: {error_log_validation[feature]}")
 
-        for feature in error_log_validation.keys():
-            writer.add_scalar(f"Test/{feature}", error_log_validation[feature], epoch)
-            print(f"Test/{feature}: {error_log_validation[feature]}")
-
-        NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
-        print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
-              "\nTest Loss: {:.3f} |".format(eval_loss),
-              "Test_NMSE : {:.3f} |".format(NMSE_error),)
+            NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
+            print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
+                  "\nTest Loss: {:.3f} |".format(eval_loss),
+                  "Test_NMSE : {:.3f} |".format(NMSE_error),)
 
         # mean_loss = np.mean(train_loss_per_epoch)
         # # Save the mean_loss value for each video instance to the writer
@@ -263,13 +269,14 @@ def run_training():
         # print(f"Epoch {epoch+1} => Training Loss: {train_loss}, Val Loss: {eval_loss}")
         # print(f"Epoch {epoch} => Training Loss: {train_loss}")
         # train_loss_per_epoch.append(train_loss)
-        validation_loss_data.append(eval_loss)
+            validation_loss_data.append(eval_loss)
 
     # print(train_dataset[0])
-    plot_loss(train_loss_per_epoch, validation_loss_data, plot_path=config.PLOT_PATH)
+    # plot_loss(train_loss_per_epoch, validation_loss_data, plot_path=config.PLOT_PATH)
     print("done")
 
 
+# Still need to fix the prediict function to work with the master dataset...
 def generate_prediction():
     model = LettuceNetPlus()
 
@@ -301,7 +308,7 @@ def generate_prediction():
     test_metadata_csv = config.TEST_ADD_FEATURES_Y
     # test_y = pd.read_csv(config.TEST_ADD_FEATURES_Y)
     # The X in addition to the Image
-    test_add_features_csv = config.TEST_ADD_FEATURES
+    test_add_features_csv = config.PRED_ADD_FEATURES
     test_df = pd.read_csv(test_add_features_csv)
 
 
@@ -366,5 +373,5 @@ def generate_prediction():
 
 
 if __name__ == '__main__':
-    # run_training()
-    generate_prediction()
+    run_training()
+    # generate_prediction()
