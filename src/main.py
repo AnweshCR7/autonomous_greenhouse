@@ -247,29 +247,29 @@ def run_training():
             print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
                   "\nTraining Loss: {:.3f} |".format(train_loss),
                   "Train_NMSE : {:.5f} |".format(NMSE_error),)
-        else:
-            # validation
-            eval_targets, eval_predictions, eval_loss = engine.eval_fn(model, test_loader, loss_fn)
+        # else:
+        # validation
+        eval_targets, eval_predictions, eval_loss = engine.eval_fn(model, test_loader, loss_fn)
 
-            error_log_validation = compute_criteria(eval_targets, eval_predictions, save=True, img_meta=test_df["Unnamed: 0"].values)
+        error_log_validation = compute_criteria(eval_targets, eval_predictions, save=True, img_meta=test_df["Unnamed: 0"].values)
 
-            for feature in error_log_validation.keys():
-                writer.add_scalar(f"Test/{feature}", error_log_validation[feature], epoch)
-                print(f"Test/{feature}: {error_log_validation[feature]}")
+        for feature in error_log_validation.keys():
+            writer.add_scalar(f"Test/{feature}", error_log_validation[feature], epoch)
+            print(f"Test/{feature}: {error_log_validation[feature]}")
 
-            NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
-            print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
-                  "\nTest Loss: {:.3f} |".format(eval_loss),
-                  "Test_NMSE : {:.3f} |".format(NMSE_error),)
+        NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
+        print(f"\nFinished [Epoch: {epoch + 1}/{config.EPOCHS}]",
+              "\nTest Loss: {:.3f} |".format(eval_loss),
+              "Test_NMSE : {:.3f} |".format(NMSE_error),)
 
-        # mean_loss = np.mean(train_loss_per_epoch)
-        # # Save the mean_loss value for each video instance to the writer
-        # print(f"Avg Training Loss: {np.mean(mean_loss)} for {config.EPOCHS} epochs")
+    # mean_loss = np.mean(train_loss_per_epoch)
+    # # Save the mean_loss value for each video instance to the writer
+    # print(f"Avg Training Loss: {np.mean(mean_loss)} for {config.EPOCHS} epochs")
 
-        # print(f"Epoch {epoch+1} => Training Loss: {train_loss}, Val Loss: {eval_loss}")
-        # print(f"Epoch {epoch} => Training Loss: {train_loss}")
-        # train_loss_per_epoch.append(train_loss)
-            validation_loss_data.append(eval_loss)
+    # print(f"Epoch {epoch+1} => Training Loss: {train_loss}, Val Loss: {eval_loss}")
+    # print(f"Epoch {epoch} => Training Loss: {train_loss}")
+    # train_loss_per_epoch.append(train_loss)
+        validation_loss_data.append(eval_loss)
 
     # print(train_dataset[0])
     # plot_loss(train_loss_per_epoch, validation_loss_data, plot_path=config.PLOT_PATH)

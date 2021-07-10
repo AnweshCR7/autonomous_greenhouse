@@ -108,7 +108,9 @@ class LettuceNetPlus(nn.Module):
         # self.resnet_linear = nn.Linear(512, 16)
         # # self.linear_concat = nn.Linear(2056, 512)
 
-        self.fc_regression5 = nn.Linear(512, len(config.FEATURES))
+        self.fc_regression3 = nn.Linear(512, 64)
+        self.fc_regression4 = nn.Linear(64, 16)
+        self.fc_regression5 = nn.Linear(16, len(config.FEATURES))
 
     def forward(self, images, targets, features):
         # Need to have so as to reflect a batch_size = 1 // if batched then comment out
@@ -128,6 +130,10 @@ class LettuceNetPlus(nn.Module):
         img_feat = img_feat.view((-1, 512))
         out = torch.cat((mid, img_feat), 1)
         out = self.linear_concat(out)
+        out = self.activation(out)
+        out = self.fc_regression3(out)
+        out = self.activation(out)
+        out = self.fc_regression4(out)
         out = self.activation(out)
         out = self.fc_regression5(out)
 
