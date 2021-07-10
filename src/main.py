@@ -48,9 +48,9 @@ def convert_to_json(predictions, image_paths, test_df):
             "FreshWeightShoot": image_predictions[0].astype('float'),
             "DryWeightShoot": image_predictions[1].astype('float'),
             # from test_df
-            "Height": rem_features["Height"].astype('float'),
-            "Diameter": rem_features["Diameter"].astype('float'),
-            "LeafArea": image_predictions[4].astype('float')
+            "Height": rem_features["Height"].values[0].astype('float'),
+            "Diameter": rem_features["Diameter"].values[0].astype('float'),
+            "LeafArea": image_predictions[2].astype('float')
         }
         data["Measurements"][f"Image{idx+1}"] = prediction_object
 
@@ -307,7 +307,7 @@ def generate_prediction():
 
     for image_name in test_df["Unnamed: 0"].values:
         image_index = int(re.findall("\d+", image_name)[0])
-        prediction_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
+        prediction_img_paths.append(f"{config.PREDICTION_DATA_DIR}/RGB_{image_index}.png")
 
 
     # prediction_img_paths = glob.glob(f"{config.PREDICTION_DATA_DIR}/RGB_*")

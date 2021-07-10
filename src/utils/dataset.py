@@ -94,13 +94,15 @@ class DataLoaderLettuceNet:
 
     def __getitem__(self, index):
         # Image has 4 channels -> converting to RGB
+        # print('HAW!oooooooooooooo')
         image = cv2.imread(self.img_paths[index])
+        # print(self.img_paths[index])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         # Get the image number
         image_num = self.img_paths[index].split('/')[-1].split('.')[0].split('_')[-1]
         # if image.shape[0] == 0:
-        # print(image_num)
-        seg_mask = cv2.imread(f"{config.SEG_DIR}/Seg_{image_num}.png")
+        # print(f"{config.SEG_DIR}/Seg_{image_num}.pred.png")
+        seg_mask = cv2.imread(f"{config.SEG_DIR}/Seg_{image_num}.pred.png")
         seg_mask = seg_mask[:, :, 0]
         # Find class
         cultivar = np.unique(seg_mask)[1]
