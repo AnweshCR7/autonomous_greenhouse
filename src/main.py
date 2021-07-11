@@ -14,6 +14,8 @@ from utils.model_utils import plot_loss, load_model_if_checkpointed, save_model_
 from models.simpleCNN import SimpleCNN
 from models.lettuceNet import LettuceNet
 from models.lettuceNetPlus import LettuceNetPlus
+from models.lettuceNetEff import LettuceNetEff
+from models.effNetDirect import LettuceNetEffDirect
 from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import DataLoaderLettuceNet
 import json
@@ -83,8 +85,8 @@ def compute_criteria(targets, predictions, save=False, img_meta=None):
 
 
 def run_training():
-    model = LettuceNetPlus()
-
+    # model = LettuceNetPlus()
+    model = LettuceNetEffDirect()
     # Fix random seed for reproducibility
     np.random.seed(config.RANDOM_SEED)
     torch.backends.cudnn.deterministic = True
@@ -111,10 +113,6 @@ def run_training():
 
     # TensorBoard
     writer = SummaryWriter(config.TENSORBOARD)
-
-    # f = open(config.JSON_FILE)
-    # meta_data = json.load(f)
-    # measurements = meta_data["Measurements"]
 
     master_metadata_csv = config.MASTER_METADATA
     master_metadata_add_features = config.MASTER_METADATA_ADD_FT
@@ -145,28 +143,6 @@ def run_training():
 
     # Now filter the training set from the master set
     train_img_paths = [path for path in all_img_paths if int(re.findall("\d+", path)[0]) not in test_img_numbers]
-    # test_img_paths = ["../data/FirstTrainingData/RGB_309.png"]
-
-
-
-    # Old code with full GT
-    # for image_name in train_df["ImageName"].values:
-    #     image_index = int(re.findall("\d+", image_name)[0])
-    #     train_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
-    #     # train_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
-    #     # train_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
-    #     # train_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
-    #
-    # # train_img_paths = train_img_paths[:16]
-    #
-    # for image_name in test_df["ImageName"].values:
-    #     image_index = int(re.findall("\d+", image_name)[0])
-    #     test_img_paths.append(f"{config.DATA_DIR}/RGB_{image_index}.png")
-    #     # test_img_paths.append(f"{config.DATA_DIR}/vf_RGB_{image_index}.png")
-    #     # test_img_paths.append(f"{config.DATA_DIR}/hf_RGB_{image_index}.png")
-    #     # test_img_paths.append(f"{config.DATA_DIR}/vfhf_RGB_{image_index}.png")
-
-    # segmentation_paths = glob.glob(f"{config.SEG_DIR}/*.png")
 
     # --------------------------------------
     # Build Train Dataloaders
@@ -262,17 +238,9 @@ def run_training():
               "\nTest Loss: {:.3f} |".format(eval_loss),
               "Test_NMSE : {:.3f} |".format(NMSE_error),)
 
-    # mean_loss = np.mean(train_loss_per_epoch)
-    # # Save the mean_loss value for each video instance to the writer
-    # print(f"Avg Training Loss: {np.mean(mean_loss)} for {config.EPOCHS} epochs")
-
-    # print(f"Epoch {epoch+1} => Training Loss: {train_loss}, Val Loss: {eval_loss}")
-    # print(f"Epoch {epoch} => Training Loss: {train_loss}")
-    # train_loss_per_epoch.append(train_loss)
         validation_loss_data.append(eval_loss)
+        scheduler.step(NMSE_error)
 
-    # print(train_dataset[0])
-    # plot_loss(train_loss_per_epoch, validation_loss_data, plot_path=config.PLOT_PATH)
     print("done")
 
 
@@ -333,7 +301,6 @@ def generate_prediction():
         batch_size=config.BATCH_SIZE,
         num_workers=config.NUM_WORKERS,
         shuffle=False,
-        # collate_fn=collate_fn
     )
 
     print('\nPrediction Data loaded!')
@@ -363,12 +330,6 @@ def generate_prediction():
 
     # Convert predictions to JSON
     convert_to_json(predictions, prediction_img_paths, test_df)
-    # for feature in error_log_validation.keys():
-    #     print(f"Test/{feature}: {error_log_validation[feature]}")
-
-    # NMSE_error = sum([error_log_validation[key] for key in error_log_validation.keys()])
-    # print(f"\nFinished [Test Epoch]",
-    #       "Test_NMSE : {:.3f} |".format(NMSE_error), )
     print("done")
 
 
