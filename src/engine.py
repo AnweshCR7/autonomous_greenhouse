@@ -19,7 +19,7 @@ def train_fn(model, data_loader, optimizer, loss_fn, save_model=False):
         optimizer.zero_grad()
         with torch.set_grad_enabled(True):
             out = model(**data)
-            loss = loss_fn(out, data["targets"])
+            loss = loss_fn(out, data["targets"].squeeze(1))
             loss.backward()
             optimizer.step()
             model_targets.extend(data["targets"].detach().cpu().numpy())
@@ -43,7 +43,7 @@ def eval_fn(model, data_loader, loss_fn):
             for (key, value) in data.items():
                 data[key] = value.to(config.DEVICE)
             out = model(**data)
-            loss = loss_fn(out, data["targets"])
+            loss = loss_fn(out, data["targets"].squeeze(1))
             model_outputs.extend(out.detach().cpu().numpy())
             model_targets.extend(data["targets"].detach().cpu().numpy())
             fin_loss += loss.item()
@@ -54,12 +54,16 @@ def eval_fn(model, data_loader, loss_fn):
 def predict_fn(model, data_loader):
     model.eval()
     model_outputs = []
-    # model_targets = []
+    model_targets = []
     with torch.no_grad():
         tk_iterator = tqdm(data_loader, total=len(data_loader))
         for data in tk_iterator:
-            out = model(data, torch.empty(1, 1))
+            for (key, value) in data.items():
+                data[key] = value.to(config.DEVICE)
+            out = model(data["images"], torch.empty(1, 1), data["features"])
             # loss = loss_fn(out, data["targets"])
             model_outputs.extend(out.detach().cpu().numpy())
+            # model_targets.extend(data["targets"].detach().cpu().numpy())
+
 
     return np.array(model_outputs)
