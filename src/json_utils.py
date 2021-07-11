@@ -36,6 +36,7 @@ def sort_json2csv(save_scaling=False):
     meta_data = json.load(f)
     measurements = meta_data["Measurements"]
     columns = ['ImageName', 'Variety', 'RGBImage', 'DebthInformation', 'FreshWeightShoot', 'DryWeightShoot', 'Height', 'Diameter', 'LeafArea']
+    # columns = ['Unnamed: 0', 'LeafArea', 'FreshWeightShoot', 'DryWeightShoot']
     data = []
     x_scaler = MinMaxScaler()
     y_scaler = MinMaxScaler()
@@ -47,10 +48,14 @@ def sort_json2csv(save_scaling=False):
                      cur_image_features['DebthInformation'], cur_image_features['FreshWeightShoot'], cur_image_features['DryWeightShoot'],
                      cur_image_features['Height'], cur_image_features['Diameter'], cur_image_features['LeafArea']])
 
+        # data.append([key, cur_image_features['LeafArea'], cur_image_features['FreshWeightShoot'], cur_image_features['DryWeightShoot']])
+
     measurements_df = pd.DataFrame(data, columns=columns)
     # measurements_df.sort_values(by=['ImageName'])
-    measurements_df = measurements_df.reindex(index=order_by_index(measurements_df.index, index_natsorted(measurements_df['ImageName'], reverse=False)))
+    # measurements_df = measurements_df.reindex(index=order_by_index(measurements_df.index, index_natsorted(measurements_df['ImageName'], reverse=False)))
+    # measurements_df = measurements_df.reindex(index=order_by_index(measurements_df.index, index_natsorted(measurements_df['Unnamed: 0'], reverse=False)))
     measurements_df.reset_index(drop=True, inplace=True)
+    # measurements_df.to_csv("../data/master_data.csv", index=False)
     # measurements_df.drop(['index'], axis=1)
 
     # train_idx = pd.read_csv("../data/features/X_train.csv")["Unnamed: 0"].values
@@ -62,8 +67,10 @@ def sort_json2csv(save_scaling=False):
     # train_df.to_csv("./TrainGroundTruth.csv", index=False)
     # test_df.to_csv("./TestGroundTruth.csv", index=False)
 
-    train_x = pd.read_csv("../data/features/x_train.csv")
-    train_y = pd.read_csv("../data/features/y_train.csv")
+    measurements_df = pd.read_csv("../data/final_data/Feature_all.csv")
+    train_x = measurements_df[config.ADD_FEATURES]
+    measurements_df = pd.read_csv("../data/master_data.csv")
+    train_y = measurements_df[config.FEATURES]
 
     # Fit the scaler on training data and pickle it
     if save_scaling:
@@ -115,6 +122,6 @@ def generate_additional_features(save_scaling=True):
 
 
 if __name__ == '__main__':
-    # sort_json2csv(save_scaling=True)
-    generate_additional_features(save_scaling=True)
+    sort_json2csv(save_scaling=True)
+    # generate_additional_features(save_scaling=True)
     # sort_json2csv(save_scaling=True)
