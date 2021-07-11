@@ -50,6 +50,9 @@ def convert_to_json(predictions, image_paths, test_df):
         }
         data["Measurements"][f"Image{idx+1}"] = prediction_object
 
+    if not os.path.exists(config.SAVE_PREDICTIONS_DIR):
+        os.makedirs(config.SAVE_PREDICTIONS_DIR)
+
     with open(f"{config.SAVE_PREDICTIONS_DIR}/Images.json", 'w+') as outfile:
         json_dumps_str = json.dumps(data, indent=4)
         print(json_dumps_str, file=outfile)
@@ -266,11 +269,11 @@ def generate_prediction():
     )
     prediction_img_paths = []
 
-    # The Y
+    # The Y to be used when we have the ground truth
     test_metadata_csv = config.TEST_ADD_FEATURES_Y
     # test_y = pd.read_csv(config.TEST_ADD_FEATURES_Y)
     # The X in addition to the Image
-    test_add_features_csv = config.PRED_ADD_FEATURES
+    test_add_features_csv = config.HARRY_FEATURES_FOR_PREDICTION
     test_df = pd.read_csv(test_add_features_csv)
 
 
@@ -278,14 +281,9 @@ def generate_prediction():
         image_index = int(re.findall("\d+", image_name)[0])
         prediction_img_paths.append(f"{config.PREDICTION_DATA_DIR}/RGB_{image_index}.png")
 
-
-    # prediction_img_paths = glob.glob(f"{config.PREDICTION_DATA_DIR}/RGB_*")
-
     # --------------------------------------
-    # Build Train Dataloaders
+    # Build Prediction Dataloaders
     # --------------------------------------
-
-    # train_set = DataLoaderLettuceNet(img_paths=train_img_paths, metadata=train_metadata_csv, center_crop=(960, 810), resize=(224, 224), add_features=train_add_features_csv, augmentations="train")
 
     prediction_set = DataLoaderLettuceNet(img_paths=prediction_img_paths, metadata=test_metadata_csv, center_crop=(960, 810), resize=(224, 224), predict=True,
                                      add_features=test_add_features_csv, augmentations="val")
@@ -328,5 +326,5 @@ def generate_prediction():
 
 
 if __name__ == '__main__':
-    run_training()
-    # generate_prediction()
+    # run_training()
+    generate_prediction()

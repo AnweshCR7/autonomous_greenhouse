@@ -1,8 +1,57 @@
 
 # Common settings
-lr = 0.001
 FEATURES = ['FreshWeightShoot', 'DryWeightShoot', 'LeafArea']
 ADD_FEATURES = ['Diameter', 'Height', 'Area', 'Volume']
+
+# ------------------------------------------------------------
+# ATTENTION HARRY: You probably need to change these variables
+# ------------------------------------------------------------
+
+# CSV with the height/diameter predictions
+HARRY_FEATURES_FOR_PREDICTION = "../data/features/X_eval.csv"
+# Data directory where new prediction images are stored.
+PREDICTION_DATA_DIR = "../data/FirstTrainingData"
+# Data Directory where segmentations are stored
+SEG_DIR = "../data/final_data/"
+# File saved as ./predictions/Images.json
+SAVE_PREDICTIONS_DIR = "./predictions/"
+
+# ------------------------------------------------------------
+# AND LETS GO!!
+# ------------------------------------------------------------
+
+# ---- Model Variables ----
+lr = 0.001
+BATCH_SIZE = 32
+NUM_WORKERS = 0
+DEVICE = "cpu"
+EPOCHS = 2
+RANDOM_SEED = 34
+TENSORBOARD = "./runs"
+# Keep this False (use in case you have the GT for inference)
+ONLY_EVAL = False
+
+SCALER_PATH = "../data/metadata/"
+SCALERFILE = "scaler.sav"
+SCALERFILE_X = "ft_scaler_x.sav"
+SCALERFILE_Y = "ft_scaler_y.sav"
+
+# Contains the Latest Ground Truth (all images)
+MASTER_METADATA = "../data/master_data.csv"
+# Latest features from Harry's model
+MASTER_METADATA_ADD_FT = "../data/final_data/Feature_all.csv"
+# Data directory where all images are stored.
+DATA_DIR = "../data/FirstTrainingData"
+
+# CSVs needed for the evaluation (No need to change for prediction)
+TEST_ADD_FEATURES = "../data/features/X_eval.csv"
+# In case we have the Ground Truths
+TEST_ADD_FEATURES_Y = "../data/features/y_eval.csv"
+
+# Checkpoint
+CHECKPOINT_PATH = "../checkpoint"
+CHECKPOINT_NAME = "direct_reg_effnet_150"
+
 
 # # # UNCOMMENT IF USING COLAB
 # # New vesion files"
@@ -38,35 +87,3 @@ ADD_FEATURES = ['Diameter', 'Height', 'Area', 'Volume']
 # ONLY_EVAL = False
 
 # # COMMENT IF USING COLAB
-DATA_DIR = "../data/FirstTrainingData"
-JSON_FILE = "./GroundTruth_SendJuly6.json"
-# New vesion files"
-MASTER_METADATA = "../data/master_data.csv"
-MASTER_METADATA_ADD_FT = "../data/final_data/Feature_all.csv"
-# eod
-TRAIN_METADATA = "../data/metadata/TrainGroundTruth.csv"
-TEST_METADATA = "../data/metadata/TestGroundTruth.csv"
-TRAIN_ADD_FEATURES = "../data/features/X_train.csv"
-TRAIN_ADD_FEATURES_Y = "../data/features/y_train.csv"
-TEST_ADD_FEATURES = "../data/features/X_eval.csv"
-TEST_ADD_FEATURES_Y = "../data/features/y_eval.csv"
-SCALER_PATH = "../data/metadata/"
-SCALERFILE = "scaler.sav"
-SCALERFILE_X = "ft_scaler_x.sav"
-SCALERFILE_Y = "ft_scaler_y.sav"
-CHECKPOINT_PATH = "../checkpoint"
-CHECKPOINT_NAME = "direct_reg_effnet_150"
-PLOT_PATH = "../plots"
-BATCH_SIZE = 32
-IMAGE_WIDTH = 300
-IMAGE_HEIGHT = 75
-NUM_WORKERS = 0
-DEVICE = "cpu"
-EPOCHS = 2
-RANDOM_SEED = 34
-TENSORBOARD = "./runs"
-
-PREDICTION_DATA_DIR = "../data/ImagesFor_June7"
-SAVE_PREDICTIONS_DIR = "./"
-SEG_DIR = "../data/final_data/"
-ONLY_EVAL = False
