@@ -41,50 +41,34 @@ class DataLoaderLettuceNet:
 
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
-        # Maybe add more augmentations
-        # transforms = transforms.Compose[
-        #     LongestMaxSize(max_size=500),
-        #     HorizontalFlip(p=0.5),
-        #     PadIfNeeded(500, 600, border_mode=0, value=0),
-        #     JpegCompression(quality_lower=70, quality_upper=100, p=1),
-        #     RandomBrightnessContrast(0.3, 0.3),
-        #     Cutout(max_h_size=32, max_w_size=32, p=1)
-        # ]
-
-        # List of Augmentations:
-        # Centre crop
-        # resize
-        # addhueandcolorsaturation
-        # linearcontrast
-        # affinesclae
-        # affinerotate
-        # affinesheer
-
 
         # This is more like in-place augmentation
         if augmentations == "train":
             self.augmentation_pipeline = A.Compose(
                 [
                     A.CenterCrop(height= self.center_crop[1], width=self.center_crop[0]),
+                    A.Normalize(
+                        mean, std, max_pixel_value=255.0, always_apply=True
+                    ),
                     # A.PadIfNeeded(min_height=1080, min_width=1920, p=1),
                     A.HorizontalFlip(p=0.5),
                     A.VerticalFlip(p=0.5),
                     A.Resize(resize[1], resize[0]),
-                    # A.RandomRotate90(p=1),
+                    A.RandomRotate90(p=1),
                     # A.RandomScale(0.25),
-                    # A.RandomBrightnessContrast(p=0.8),
-                    # A.IAAAffine(rotate=0.5, p=0.8),
-                    # A.IAAAffine(shear=0.5, p=0.8),
+                    A.RandomBrightnessContrast(p=0.8),
+                    A.IAAAffine(rotate=0.5, p=0.8),
+                    A.IAAAffine(shear=0.5, p=0.8),
 
-                    # A.Normalize(
-                    #     mean, std, max_pixel_value=255.0, always_apply=True
-                    # )
                 ]
             )
         else:
             self.augmentation_pipeline = A.Compose(
                 [
                     A.CenterCrop(height=self.center_crop[1], width=self.center_crop[0]),
+                    A.Normalize(
+                        mean, std, max_pixel_value=255.0, always_apply=True
+                    ),
                     A.Resize(resize[1], resize[0]),
                 ]
             )
@@ -97,7 +81,11 @@ class DataLoaderLettuceNet:
         # print('HAW!oooooooooooooo')
         image = cv2.imread(self.img_paths[index])
         # print(self.img_paths[index])
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        try:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        except:
+            print(f"Image not found: {self.img_paths[index]}")
+
         # Get the image number
         image_num = self.img_paths[index].split('/')[-1].split('.')[0].split('_')[-1]
         # if image.shape[0] == 0:
@@ -110,8 +98,15 @@ class DataLoaderLettuceNet:
         #   seg_mask = cv2.imread(f"{seg_dir}/Seg_{image_num}.png")
 
         seg_mask = cv2.imread(f"{config.SEG_DIR}/Seg_{image_num}.pred.png")
-        seg_mask = seg_mask[:, :, 0]
+        try:
+            seg_mask = seg_mask[:, :, 0]
+        except:
+            print(f"Couldn't get the mask @: {config.SEG_DIR}/Seg_{image_num}.pred.png")
         # Find class
+        if len(np.unique(seg_mask)) == 1:
+            print('Segmentation mask only has one class?')
+
+        # Force to find a number between 0:(background) and 5:(box)
         cultivar = np.unique(seg_mask)[1]
         # Get segmentation of class
         seg_mask_lettuce = (seg_mask == cultivar).astype('uint8')

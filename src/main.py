@@ -2,17 +2,11 @@ import os
 import glob
 import torch
 import numpy as np
-from pprint import pprint
-from torchvision import datasets, transforms
 import torch.nn as nn
-from sklearn import model_selection
-from sklearn import metrics
 import engine
 import config
 # import dataset
 from utils.model_utils import plot_loss, load_model_if_checkpointed, save_model_checkpoint
-from models.simpleCNN import SimpleCNN
-from models.lettuceNet import LettuceNet
 from models.lettuceNetPlus import LettuceNetPlus
 from models.lettuceNetEff import LettuceNetEff
 from models.effNetDirect import LettuceNetEffDirect
@@ -246,7 +240,7 @@ def run_training():
 
 # Still need to fix the prediict function to work with the master dataset...
 def generate_prediction():
-    model = LettuceNetPlus()
+    model = LettuceNetEffDirect()
 
     # Fix random seed for reproducibility
     np.random.seed(config.RANDOM_SEED)
